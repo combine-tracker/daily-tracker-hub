@@ -1,0 +1,32 @@
+{
+  "entities": {
+    "transactions": {
+      "fields": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "type": { "type": "string" },
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "time": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "loans": {
+      "fields": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "counterparty": { "type": "string" },
+        "originalAmount": { "type": "number" },
+        "remainingAmount": { "type": "number" },
+        "date": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "status": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  }
+}

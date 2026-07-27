@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Hide interactive buttons, navigation bar, floating action buttons */
+  button,
+  nav,
+  header,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Ensure document container stretches nicely */
+  .fixed {
+    position: relative !important;
+    inset: auto !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  /* Optimize master table for paper printout */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}

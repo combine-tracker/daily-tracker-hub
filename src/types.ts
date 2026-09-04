@@ -15,6 +15,11 @@ export interface Transaction {
   description: string;
   time: string; // e.g. "09:30 AM"
   createdAt: string; // ISO string
+  updatedAt?: string;
+  referenceNumber?: string;
+  customerName?: string;
+  status?: 'UNCLAIMED' | 'CLAIMED' | string;
+  count?: number; // Count of aggregated entries for Load / Bills Payment
 }
 
 export interface CategorySummary {
@@ -110,75 +115,6 @@ export interface BackupFileStructure {
   transactions: Transaction[];
 }
 
-// --- Fish Harvest Monitor Types ---
-export type FishSizeCode = 'OS (Oversized >500g)' | '2-1' | '5-2' | '3-1' | '4-1' | 'Daing / Rejects';
-
-export interface RawBoxEntry {
-  id: string;
-  size: FishSizeCode | string;
-  boxes: number;
-  kgPerBox: number;
-  looseKg: number;
-  totalKg: number;
-  timestamp: string;
-  date: string; // YYYY-MM-DD
-}
-
-export interface BatchOutRecord {
-  id: string;
-  batchName: string;
-  size: FishSizeCode | string;
-  boxesOut: number;
-  kgPerBox: number;
-  totalKgOut: number;
-  timestamp: string;
-  date: string;
-}
-
-export interface SalesSlipRecord {
-  id: string;
-  sizeGroup: FishSizeCode | string;
-  classification: string; // e.g. "Main broker / buyer bulk"
-  totalBoxes: number;
-  looseKg?: number;
-  acknowledgedNetKg: number;
-  pricePerKg: number;
-  totalAmount: number;
-  includeInTotalKg: boolean;
-  timestamp: string;
-  date: string;
-}
-
-export interface WalkInSaleRecord {
-  id: string;
-  size: FishSizeCode | string;
-  kgSold: number;
-  amount: number;
-  includeInTotalKg: boolean;
-  timestamp: string;
-  date: string;
-}
-
-export interface HarvestDeductionRecord {
-  id: string;
-  category: 'Labor / Harvesters Fee' | 'Ice & Milling' | 'Trucking & Freight' | 'Cash Advance' | 'Food & Supplies' | 'Others';
-  description: string;
-  amount: number;
-  date: string;
-  timestamp: string;
-}
-
-export interface FishHarvestBackupFile {
-  app: 'Fish Harvest Monitor';
-  version: string;
-  exportDate: string;
-  rawBoxes: RawBoxEntry[];
-  batchOuts: BatchOutRecord[];
-  salesSlips: SalesSlipRecord[];
-  walkInSales: WalkInSaleRecord[];
-  deductions?: HarvestDeductionRecord[];
-}
-
 // --- Credit Lines Monitoring Types ---
 export interface CreditAccount {
   id: string;
@@ -196,6 +132,25 @@ export interface CreditAccount {
 export interface CreditMonitoringState {
   accounts: CreditAccount[];
   lastUpdated?: string;
+}
+
+// --- Digital Subscriptions Types ---
+export type SubscriptionCategory = 'Canva' | 'Capcut' | 'Gemini' | 'Loklok' | 'Spotify' | 'Netflix' | 'Disney+' | 'Others' | string;
+
+export interface SubscriptionItem {
+  id: string;
+  serviceName: string; // e.g., 'Canva Pro', 'CapCut Pro', 'Gemini Advanced', 'LokLok Premium'
+  category: SubscriptionCategory;
+  cost: number;
+  billingCycle: 'Monthly' | 'Yearly' | 'Weekly' | 'Quarterly' | 'One-Time' | string;
+  status: 'Active' | 'Paused' | 'Cancelled' | 'Expired';
+  nextRenewalDate: string; // YYYY-MM-DD
+  paymentMethod: string; // e.g. 'Maya', 'GCash', 'Credit Card', 'Bank Transfer'
+  associatedEmail?: string;
+  simNumber?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 

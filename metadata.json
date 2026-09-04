@@ -1,6 +1,8 @@
 {
-  "name": "Fish Harvest Monitor",
-  "description": "Comprehensive fish harvest monitoring system for raw sorting, batch outs, buyer sales slips, walk-in sales, and settlement master sheets.",
+  "name": "Remix Daily Sales \u0026 Expense Tracker",
+  "description": "Daily tracking of Cash In, Cash Out, Billing Payments, Load, and category expenses with collapsible breakdowns, deep search analytics, and recovery file auto-saving.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

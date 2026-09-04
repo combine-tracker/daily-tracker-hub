@@ -3,6 +3,7 @@ import {
   Scale,
   HandCoins,
   CreditCard,
+  Tv,
   TrendingUp,
   TrendingDown,
   LayoutDashboard,
@@ -24,7 +25,6 @@ interface VerticalNavProps {
 interface TabOption {
   id: TabType;
   label: string;
-  subtitle: string;
   badge?: string;
   icon: React.ElementType;
   activeBg: string;
@@ -38,7 +38,6 @@ const TAB_OPTIONS: TabOption[] = [
   {
     id: 'search',
     label: 'Deep Search',
-    subtitle: 'Filter & Search Records',
     badge: 'Search',
     icon: Search,
     activeBg: 'bg-indigo-600 dark:bg-indigo-600',
@@ -50,7 +49,6 @@ const TAB_OPTIONS: TabOption[] = [
   {
     id: 'cash-monitoring',
     label: 'Cash Monitoring',
-    subtitle: 'On-Hand & Bank Balances',
     badge: 'Balance',
     icon: Scale,
     activeBg: 'bg-indigo-600 dark:bg-indigo-600',
@@ -61,8 +59,7 @@ const TAB_OPTIONS: TabOption[] = [
   },
   {
     id: 'sales',
-    label: 'Sales Tab',
-    subtitle: 'Income, Cash In & GCash',
+    label: 'Sales',
     badge: 'Cash In',
     icon: TrendingUp,
     activeBg: 'bg-emerald-600 dark:bg-emerald-600',
@@ -73,8 +70,7 @@ const TAB_OPTIONS: TabOption[] = [
   },
   {
     id: 'expenses',
-    label: 'Expenses Tab',
-    subtitle: 'Cash Out, Supplies & Bills',
+    label: 'Expenses',
     badge: 'Cash Out',
     icon: TrendingDown,
     activeBg: 'bg-rose-600 dark:bg-rose-600',
@@ -85,8 +81,7 @@ const TAB_OPTIONS: TabOption[] = [
   },
   {
     id: 'loans',
-    label: 'Loans (Utang)',
-    subtitle: 'Debts & Repayments Tracker',
+    label: 'Loans',
     badge: 'Utang',
     icon: HandCoins,
     activeBg: 'bg-amber-600 dark:bg-amber-600',
@@ -97,8 +92,7 @@ const TAB_OPTIONS: TabOption[] = [
   },
   {
     id: 'credits',
-    label: 'Credit Line Monitoring',
-    subtitle: 'Atome, PayMaya, CIMB, GCash',
+    label: 'Credit Line',
     badge: 'Credits',
     icon: CreditCard,
     activeBg: 'bg-purple-600 dark:bg-purple-600',
@@ -108,9 +102,19 @@ const TAB_OPTIONS: TabOption[] = [
     badgeText: 'text-purple-800 dark:text-purple-200',
   },
   {
+    id: 'subscriptions',
+    label: 'Digital Subscriptions',
+    badge: 'Subs',
+    icon: Tv,
+    activeBg: 'bg-pink-600 dark:bg-pink-600',
+    activeText: 'text-white',
+    activeBorder: 'border-pink-500',
+    badgeBg: 'bg-pink-100 dark:bg-pink-900/60',
+    badgeText: 'text-pink-800 dark:text-pink-200',
+  },
+  {
     id: 'soa',
     label: 'Monthly SOA Statement',
-    subtitle: 'End of Month SOA Reports',
     badge: 'SOA',
     icon: FileText,
     activeBg: 'bg-indigo-600 dark:bg-indigo-600',
@@ -122,7 +126,6 @@ const TAB_OPTIONS: TabOption[] = [
   {
     id: 'recovery',
     label: 'Recovery File',
-    subtitle: 'JSON Backup & Restore',
     badge: 'Backup',
     icon: Database,
     activeBg: 'bg-indigo-600 dark:bg-indigo-600',
@@ -145,7 +148,7 @@ export const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, setActiveTa
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs p-2 sm:p-3 lg:sticky lg:top-20 transition-all">
+    <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl shadow-md p-2 sm:p-3 transition-all">
       {/* Mobile Bar Header (Visible on small screens) */}
       <div className="lg:hidden">
         <button
@@ -183,7 +186,7 @@ export const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, setActiveTa
       {/* Vertical Navigation List */}
       <div
         className={`${
-          isMobileExpanded ? 'block mt-2' : 'hidden'
+          isMobileExpanded ? 'block mt-2 max-h-[70vh] overflow-y-auto pr-1' : 'hidden'
         } lg:block space-y-1`}
       >
         <div className="hidden lg:flex items-center justify-between px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-slate-800 mb-1">
@@ -223,22 +226,13 @@ export const VerticalNav: React.FC<VerticalNavProps> = ({ activeTab, setActiveTa
                     <Icon className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
                   </div>
 
-                  <div className="min-w-0">
-                    <span
-                      className={`text-xs sm:text-sm font-bold block truncate ${
-                        isActive ? 'text-white' : 'text-slate-900 dark:text-white'
-                      }`}
-                    >
-                      {option.label}
-                    </span>
-                    <span
-                      className={`text-[11px] block truncate ${
-                        isActive ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      {option.subtitle}
-                    </span>
-                  </div>
+                  <span
+                    className={`text-xs sm:text-sm font-bold truncate ${
+                      isActive ? 'text-white' : 'text-slate-900 dark:text-white'
+                    }`}
+                  >
+                    {option.label}
+                  </span>
                 </div>
 
                 {option.badge && (

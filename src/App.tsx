@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Header, TabType } from './components/Header';
 import { VerticalNav } from './components/VerticalNav';
-import { AppSuiteHeader, AppModule } from './components/AppSuiteHeader';
-import { FishHarvestApp } from './components/FishHarvestApp';
 import { CashMonitoringView } from './components/CashMonitoringView';
 import { LoansView } from './components/LoansView';
 import { CreditMonitoringView } from './components/CreditMonitoringView';
+import { SubscriptionsView } from './components/SubscriptionsView';
 import { SalesView } from './components/SalesView';
 
 import { ExpensesView } from './components/ExpensesView';
@@ -14,46 +13,86 @@ import { DeepSearch } from './components/DeepSearch';
 import { RecoveryTab } from './components/RecoveryTab';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { ExitConfirmationModal } from './components/ExitConfirmationModal';
-import { Transaction, TransactionType, LoanRecord, LoanPayment, CashMonitoringState } from './types';
+import { NotificationCenterModal } from './components/NotificationCenterModal';
+import { Transaction, TransactionType, LoanRecord, LoanPayment, CashMonitoringState, SubscriptionItem, CreditAccount } from './types';
 import {
   loadStoredTransactions,
   saveTransactionsToStorage,
   getLastAutoSaveTime,
   loadStoredLoans,
   saveStoredLoans,
+  loadStoredSubscriptions,
+  loadStoredCreditAccounts,
   saveCashMonitoringState,
   exportRecoveryFile,
+  AUTO_CONSOLIDATING_CATEGORIES,
+  consolidateAutoCategories,
+  getCanonicalCategory,
 } from './utils/storage';
+import { checkAndTriggerDueNotifications, getAllDueItems } from './utils/notifications';
 import { INITIAL_SAMPLE_TRANSACTIONS, INITIAL_CASH_MONITORING_STATE } from './constants';
 import { firebaseSync } from './services/firebaseSync';
 
 export default function App() {
-  const [activeApp, setActiveApp] = useState<AppModule>(() => {
-    return (localStorage.getItem('active_app_module_v1') as AppModule) || 'daily-tracker';
-  });
-
-  const handleSwitchApp = (app: AppModule) => {
-    setActiveApp(app);
-    localStorage.setItem('active_app_module_v1', app);
-  };
-
   const [activeTab, setActiveTab] = useState<TabType>('sales');
   const [selectedDate, setSelectedDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
 
+  // Dark/Light Theme State
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
 
   // Main state
   const [transactions, setTransactions] = useState<Transaction[]>(() => loadStoredTransactions());
   const [loans, setLoans] = useState<LoanRecord[]>(() => loadStoredLoans());
+  const [subscriptions, setSubscriptions] = useState<SubscriptionItem[]>(() => loadStoredSubscriptions());
+  const [credits, setCredits] = useState<CreditAccount[]>(() => loadStoredCreditAccounts());
   const [lastAutoSave, setLastAutoSave] = useState<string | null>(() => getLastAutoSaveTime());
 
   // Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isExitModalOpen, setIsExitModalOpen] = useState<boolean>(false);
+  const [isNotifCenterOpen, setIsNotifCenterOpen] = useState<boolean>(false);
   const [modalInitialType, setModalInitialType] = useState<TransactionType>('sales');
   const [modalInitialCategory, setModalInitialCategory] = useState<string>('Cash In');
   const [modalInitialDate, setModalInitialDate] = useState<string>(selectedDate);
   const [isModalCategoryLocked, setIsModalCategoryLocked] = useState<boolean>(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
+  // Calculate Due Notification items count
+  const dueItems = useMemo(() => {
+    return getAllDueItems(subscriptions, credits, loans);
+  }, [subscriptions, credits, loans]);
+
+  // Automatic Background Check & Push Trigger for Subscriptions & Credit Lines
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const sentAlerts = checkAndTriggerDueNotifications();
+      if (sentAlerts > 0) {
+        showToast(`🔔 ${sentAlerts} push notification alert${sentAlerts > 1 ? 's' : ''} sent for upcoming dues!`);
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [subscriptions, credits, loans]);
 
   // Toast Notification State
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -68,35 +107,40 @@ export default function App() {
   // Mobile Back Button Navigation & Exit Interception
   useEffect(() => {
     // Push initial history state to capture back button
-    window.history.pushState({ app: activeApp, tab: activeTab }, '');
+    window.history.pushState({ app: 'store-app', tab: activeTab }, '');
 
     const handlePopState = () => {
-      // Re-push history state so the user stays inside the app container
-      window.history.pushState({ app: activeApp, tab: activeTab }, '');
+      // Re-push history state so the browser stays inside the app container unless confirmed
+      window.history.pushState({ app: 'store-app', tab: activeTab }, '');
 
-      // 1. If Add/Edit Modal is open, close it first
+      // 1. If Add/Edit Modal is open, close modal
       if (isAddModalOpen) {
         setIsAddModalOpen(false);
         setEditingTx(null);
         return;
       }
 
-      // 2. If Exit Modal is already open, close it
+      // 2. If Notification Center Modal is open, close modal
+      if (isNotifCenterOpen) {
+        setIsNotifCenterOpen(false);
+        return;
+      }
+
+      // 3. If Exit Modal is open and back is pressed, close the modal (Stay in App)
       if (isExitModalOpen) {
         setIsExitModalOpen(false);
         return;
       }
 
-      // 3. Check if currently on the main dashboard
-      const isMainDashboard = activeApp === 'daily-tracker' && activeTab === 'sales';
+      // 4. Check if currently on the main dashboard (Sales Tab)
+      const isMainDashboard = activeTab === 'sales';
 
       if (!isMainDashboard) {
-        // Redirect back to Main Dashboard instead of exiting
-        setActiveApp('daily-tracker');
+        // First back press (when on sub-tab): Redirect back to Sales Dashboard
         setActiveTab('sales');
-        showToast('Returned to Main Dashboard');
+        showToast('Returned to Sales Dashboard');
       } else {
-        // Already on Main Dashboard -> Show exit confirmation prompt
+        // Back press on Sales Dashboard: Show Exit Confirmation Modal asking if user wants to leave or stay
         setIsExitModalOpen(true);
       }
     };
@@ -105,7 +149,7 @@ export default function App() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, [activeApp, activeTab, isAddModalOpen, isExitModalOpen]);
+  }, [activeTab, isAddModalOpen, isNotifCenterOpen, isExitModalOpen]);
 
   // Prevent accidental tab close or page reload
   useEffect(() => {
@@ -125,7 +169,7 @@ export default function App() {
   useEffect(() => {
     firebaseSync.init(
       (updatedTxs) => {
-        setTransactions(updatedTxs);
+        setTransactions(consolidateAutoCategories(updatedTxs).consolidated);
       },
       (updatedLoans) => {
         setLoans(updatedLoans);
@@ -138,7 +182,17 @@ export default function App() {
 
   const handleConfirmExit = () => {
     setIsExitModalOpen(false);
-    showToast('Exited session safely. Your data remains stored locally.');
+    showToast('Exited session safely. Data is stored locally.');
+    setTimeout(() => {
+      try {
+        window.close();
+      } catch {
+        // ignore
+      }
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.go(-2);
+      }
+    }, 150);
   };
 
   // Synchronize storage whenever transactions change
@@ -216,11 +270,41 @@ export default function App() {
     showToast('Loan payment recorded.');
   };
 
+  // Claim an Unclaimed Cash Out transaction
+  const handleClaimCashOut = (id: string, customerName: string) => {
+    let claimedTx: Transaction | null = null;
+    const updated = transactions.map((t) => {
+      if (t.id === id) {
+        claimedTx = {
+          ...t,
+          customerName: customerName.trim(),
+          status: 'CLAIMED',
+          updatedAt: new Date().toISOString(),
+        };
+        return claimedTx;
+      }
+      return t;
+    });
+
+    handleUpdateTransactions(updated, `Claimed Cash Out ${id}`);
+    if (claimedTx) {
+      firebaseSync.syncTransactionUpsert(claimedTx);
+    }
+    showToast(`Cash-out claimed for ${customerName.trim()}!`);
+  };
+
   // Save or Update Transaction
   const handleSaveTransaction = (
     txData: Omit<Transaction, 'id' | 'createdAt'>,
     existingId?: string
   ) => {
+    // 1. Process Status for Cash Out Category
+    let finalTxData = { ...txData };
+    if (finalTxData.category === 'Cash Out') {
+      const isClaimed = !!(finalTxData.customerName && finalTxData.customerName.trim());
+      finalTxData.status = isClaimed ? 'CLAIMED' : 'UNCLAIMED';
+    }
+
     if (existingId) {
       // Update existing
       let updatedTxObj: Transaction | null = null;
@@ -228,7 +312,7 @@ export default function App() {
         if (t.id === existingId) {
           updatedTxObj = {
             ...t,
-            ...txData,
+            ...finalTxData,
             updatedAt: new Date().toISOString(),
           } as Transaction;
           return updatedTxObj;
@@ -239,18 +323,84 @@ export default function App() {
       if (updatedTxObj) {
         firebaseSync.syncTransactionUpsert(updatedTxObj);
       }
-      showToast(`Updated entry: ${txData.category} (₱${txData.amount.toLocaleString()})`);
+      showToast(`Updated entry: ${finalTxData.category} (₱${finalTxData.amount.toLocaleString()})`);
     } else {
-      // Create new
-      const newTx: Transaction = {
-        ...txData,
-        id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        createdAt: new Date().toISOString(),
+      // Check if this category triggers Daily Auto-Consolidation
+      const canonicalCat = getCanonicalCategory(finalTxData.category);
+      const cleanDate = finalTxData.date.split('T')[0].trim();
+      const isAutoConsolidateCategory = AUTO_CONSOLIDATING_CATEGORIES.has(canonicalCat);
+
+      const normalizedTxData = {
+        ...finalTxData,
+        category: canonicalCat,
+        date: cleanDate,
       };
-      const updated = [newTx, ...transactions];
-      handleUpdateTransactions(updated, `Added new ${txData.category} entry`);
-      firebaseSync.syncTransactionUpsert(newTx);
-      showToast(`Logged ${txData.category}: ₱${txData.amount.toLocaleString()}`);
+
+      let existingConsolidated: Transaction | undefined;
+      if (isAutoConsolidateCategory) {
+        existingConsolidated = transactions.find(
+          (t) =>
+            t.date.split('T')[0].trim() === cleanDate &&
+            t.type === normalizedTxData.type &&
+            getCanonicalCategory(t.category) === canonicalCat
+        );
+      }
+
+      if (existingConsolidated) {
+        // Auto-consolidate into existing record for this date
+        const newCount = (existingConsolidated.count || 1) + 1;
+        const newAmount = Number(existingConsolidated.amount || 0) + Number(normalizedTxData.amount || 0);
+        const defaultDesc = `${canonicalCat} Entry`;
+
+        let newDescription = existingConsolidated.description || defaultDesc;
+        if (
+          normalizedTxData.description &&
+          normalizedTxData.description !== defaultDesc &&
+          !newDescription.includes(normalizedTxData.description)
+        ) {
+          if (newDescription && newDescription !== defaultDesc) {
+            newDescription = `${newDescription}, ${normalizedTxData.description}`;
+          } else {
+            newDescription = normalizedTxData.description;
+          }
+        }
+
+        const updatedTxObj: Transaction = {
+          ...existingConsolidated,
+          amount: newAmount,
+          time: normalizedTxData.time || existingConsolidated.time,
+          description: newDescription,
+          count: newCount,
+          updatedAt: new Date().toISOString(),
+          customerName: normalizedTxData.customerName
+            ? existingConsolidated.customerName && !existingConsolidated.customerName.includes(normalizedTxData.customerName)
+              ? `${existingConsolidated.customerName}, ${normalizedTxData.customerName}`
+              : normalizedTxData.customerName || existingConsolidated.customerName
+            : existingConsolidated.customerName,
+          referenceNumber: normalizedTxData.referenceNumber
+            ? existingConsolidated.referenceNumber && !existingConsolidated.referenceNumber.includes(normalizedTxData.referenceNumber)
+              ? `${existingConsolidated.referenceNumber}, ${normalizedTxData.referenceNumber}`
+              : normalizedTxData.referenceNumber || existingConsolidated.referenceNumber
+            : existingConsolidated.referenceNumber,
+        };
+
+        const updated = transactions.map((t) => (t.id === existingConsolidated!.id ? updatedTxObj : t));
+        handleUpdateTransactions(updated, `Auto-consolidated ${canonicalCat} entry`);
+        firebaseSync.syncTransactionUpsert(updatedTxObj);
+        showToast(`Auto-consolidated ${canonicalCat}: total ₱${newAmount.toLocaleString()} (${newCount} logs aggregated)`);
+      } else {
+        // Create new transaction entry
+        const newTx: Transaction = {
+          ...normalizedTxData,
+          id: `tx-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          count: isAutoConsolidateCategory ? 1 : undefined,
+          createdAt: new Date().toISOString(),
+        };
+        const updated = [newTx, ...transactions];
+        handleUpdateTransactions(updated, `Added new ${canonicalCat} entry`);
+        firebaseSync.syncTransactionUpsert(newTx);
+        showToast(`Logged ${canonicalCat}: ₱${normalizedTxData.amount.toLocaleString()}`);
+      }
     }
 
     setEditingTx(null);
@@ -352,155 +502,167 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-indigo-500 selection:text-white">
-      {/* Top Suite Header for 1-click App Toggle */}
-      <AppSuiteHeader
-        activeApp={activeApp}
-        setActiveApp={handleSwitchApp}
+      {/* Navigation Header */}
+      <Header
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        lastAutoSave={lastAutoSave}
+        totalRecordsCount={transactions.length}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
+        onQuickAddClick={() => handleOpenAddModal('sales', 'Cash In')}
+        onExportBackup={handleExportBackup}
         onExitApp={() => setIsExitModalOpen(true)}
+        dueCount={dueItems.length}
+        onOpenNotificationCenter={() => setIsNotifCenterOpen(true)}
       />
 
-      {/* Render Fish Harvest Monitor App */}
-      {activeApp === 'harvest-monitoring' && <FishHarvestApp />}
+      {/* Main Container */}
+      <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+          {/* Vertical Navigation Sidebar / Block */}
+          <aside className="w-full lg:w-64 xl:w-72 shrink-0 sticky top-[88px] sm:top-[60px] lg:top-[68px] z-20">
+            <VerticalNav activeTab={activeTab} setActiveTab={setActiveTab} />
+          </aside>
 
-      {/* Render Daily Sales & Expense Tracker App */}
-      {activeApp === 'daily-tracker' && (
-        <>
-          {/* Navigation Header */}
-          <Header
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            lastAutoSave={lastAutoSave}
-            totalRecordsCount={transactions.length}
-            onQuickAddClick={() => handleOpenAddModal('sales', 'Cash In')}
-            onExportBackup={handleExportBackup}
-          />
+          {/* View Content Area */}
+          <main className="flex-1 min-w-0 w-full space-y-4 sm:space-y-6">
+            {activeTab === 'cash-monitoring' && (
+              <CashMonitoringView
+                transactions={transactions}
+                loans={loans}
+                onNavigateToLoans={() => setActiveTab('loans')}
+                onShowToast={showToast}
+              />
+            )}
 
-          {/* Main Container */}
-          <div className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
-              {/* Vertical Navigation Sidebar / Block */}
-              <aside className="w-full lg:w-64 xl:w-72 shrink-0">
-                <VerticalNav activeTab={activeTab} setActiveTab={setActiveTab} />
-              </aside>
+            {activeTab === 'loans' && (
+              <LoansView
+                loans={loans}
+                onAddLoan={handleAddLoan}
+                onEditLoan={handleEditLoan}
+                onDeleteLoan={handleDeleteLoan}
+                onRecordPayment={handleRecordPayment}
+                onClearAllLoans={handleClearAllLoans}
+                onShowToast={showToast}
+              />
+            )}
 
-              {/* View Content Area */}
-              <main className="flex-1 min-w-0 w-full space-y-4 sm:space-y-6">
-                {activeTab === 'cash-monitoring' && (
-                  <CashMonitoringView
-                    transactions={transactions}
-                    loans={loans}
-                    onNavigateToLoans={() => setActiveTab('loans')}
-                    onShowToast={showToast}
-                  />
-                )}
+            {activeTab === 'credits' && (
+              <CreditMonitoringView
+                onShowToast={showToast}
+                onCreditsChange={setCredits}
+              />
+            )}
 
-                {activeTab === 'loans' && (
-                  <LoansView
-                    loans={loans}
-                    onAddLoan={handleAddLoan}
-                    onEditLoan={handleEditLoan}
-                    onDeleteLoan={handleDeleteLoan}
-                    onRecordPayment={handleRecordPayment}
-                    onClearAllLoans={handleClearAllLoans}
-                    onShowToast={showToast}
-                  />
-                )}
+            {activeTab === 'subscriptions' && (
+              <SubscriptionsView
+                onShowToast={showToast}
+                onSubscriptionsChange={setSubscriptions}
+              />
+            )}
 
-                {activeTab === 'credits' && (
-                  <CreditMonitoringView
-                    onShowToast={showToast}
-                  />
-                )}
+            {activeTab === 'sales' && (
+              <SalesView
+                transactions={transactions}
+                onOpenAddModal={handleOpenAddModal}
+                onEditTransaction={handleEditTransaction}
+                onDeleteTransaction={handleDeleteTransaction}
+                onDeleteDayTransactions={handleDeleteDayTransactions}
+                onClaimCashOut={handleClaimCashOut}
+              />
+            )}
 
-                {activeTab === 'sales' && (
+            {activeTab === 'expenses' && (
+              <ExpensesView
+                transactions={transactions}
+                onOpenAddModal={handleOpenAddModal}
+                onEditTransaction={handleEditTransaction}
+                onDeleteTransaction={handleDeleteTransaction}
+                onDeleteDayTransactions={handleDeleteDayTransactions}
+              />
+            )}
 
-                  <SalesView
-                    transactions={transactions}
-                    onOpenAddModal={handleOpenAddModal}
-                    onEditTransaction={handleEditTransaction}
-                    onDeleteTransaction={handleDeleteTransaction}
-                    onDeleteDayTransactions={handleDeleteDayTransactions}
-                  />
-                )}
+            {activeTab === 'soa' && (
+              <MonthlySoaView
+                transactions={transactions}
+                loans={loans}
+              />
+            )}
 
-                {activeTab === 'expenses' && (
-                  <ExpensesView
-                    transactions={transactions}
-                    onOpenAddModal={handleOpenAddModal}
-                    onEditTransaction={handleEditTransaction}
-                    onDeleteTransaction={handleDeleteTransaction}
-                    onDeleteDayTransactions={handleDeleteDayTransactions}
-                  />
-                )}
+            {activeTab === 'search' && (
+              <DeepSearch
+                transactions={transactions}
+                onEditTransaction={handleEditTransaction}
+                onDeleteTransaction={handleDeleteTransaction}
+                onDeleteMultipleTransactions={handleDeleteMultipleTransactions}
+              />
+            )}
 
-                {activeTab === 'soa' && (
-                  <MonthlySoaView
-                    transactions={transactions}
-                    loans={loans}
-                  />
-                )}
+            {activeTab === 'recovery' && (
+              <RecoveryTab
+                transactions={transactions}
+                lastAutoSave={lastAutoSave}
+                onRestoreTransactions={handleRestoreTransactions}
+                onResetData={handleResetData}
+                onLoadSampleData={handleLoadSampleData}
+              />
+            )}
+          </main>
+        </div>
+      </div>
 
-                {activeTab === 'search' && (
-                  <DeepSearch
-                    transactions={transactions}
-                    onEditTransaction={handleEditTransaction}
-                    onDeleteTransaction={handleDeleteTransaction}
-                    onDeleteMultipleTransactions={handleDeleteMultipleTransactions}
-                  />
-                )}
+      {/* Add / Edit Modal */}
+      <AddTransactionModal
+        isOpen={isAddModalOpen}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setEditingTx(null);
+          setIsModalCategoryLocked(false);
+        }}
+        onSave={handleSaveTransaction}
+        initialType={modalInitialType}
+        initialCategory={modalInitialCategory}
+        initialDate={modalInitialDate}
+        editingTransaction={editingTx}
+        isCategoryLocked={isModalCategoryLocked}
+      />
 
-                {activeTab === 'recovery' && (
-                  <RecoveryTab
-                    transactions={transactions}
-                    lastAutoSave={lastAutoSave}
-                    onRestoreTransactions={handleRestoreTransactions}
-                    onResetData={handleResetData}
-                    onLoadSampleData={handleLoadSampleData}
-                  />
-                )}
-              </main>
-            </div>
-          </div>
-
-          {/* Add / Edit Modal */}
-          <AddTransactionModal
-            isOpen={isAddModalOpen}
-            onClose={() => {
-              setIsAddModalOpen(false);
-              setEditingTx(null);
-              setIsModalCategoryLocked(false);
-            }}
-            onSave={handleSaveTransaction}
-            initialType={modalInitialType}
-            initialCategory={modalInitialCategory}
-            initialDate={modalInitialDate}
-            editingTransaction={editingTx}
-            isCategoryLocked={isModalCategoryLocked}
-          />
-
-          {/* Floating Toast Notification */}
-          {toastMessage && (
-            <div className="fixed bottom-5 right-5 z-50 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 border border-slate-700 dark:border-slate-200 animate-slide-up">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              <span>{toastMessage}</span>
-            </div>
-          )}
-
-          {/* Clean Footer */}
-          <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
-            <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-              <span>Daily Sales & Expense Tracker • Cash In, Cash Out, Billing, Load & Expenses</span>
-              <span>Auto-Save Enabled • Portable JSON Recovery File Supported</span>
-            </div>
-          </footer>
-        </>
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 border border-slate-700 dark:border-slate-200 animate-slide-up">
+          <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
       )}
+
+      {/* Clean Footer */}
+      <footer className="border-t border-slate-200 dark:border-slate-800 py-4 text-center text-xs text-slate-400">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <span>Daily Sales & Expense Tracker • Cash In, Cash Out, Billing, Load & Expenses</span>
+          <span>Auto-Save Enabled • Portable JSON Recovery File Supported</span>
+        </div>
+      </footer>
 
       {/* Exit Confirmation Modal */}
       <ExitConfirmationModal
         isOpen={isExitModalOpen}
         onClose={() => setIsExitModalOpen(false)}
         onConfirmExit={handleConfirmExit}
+      />
+
+      {/* Push Notification Center Modal */}
+      <NotificationCenterModal
+        isOpen={isNotifCenterOpen}
+        onClose={() => setIsNotifCenterOpen(false)}
+        onNavigateTab={(tab) => {
+          setActiveTab(tab);
+          setIsNotifCenterOpen(false);
+        }}
+        subscriptions={subscriptions}
+        credits={credits}
+        loans={loans}
+        showToast={showToast}
       />
     </div>
   );

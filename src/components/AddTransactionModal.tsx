@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Check, ArrowDownLeft, ArrowUpRight, DollarSign, Clock, Calendar } from 'lucide-react';
+import { X, Plus, Check, ArrowDownLeft, ArrowUpRight, DollarSign, Clock, Calendar, Sparkles } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
 import { DEFAULT_SALES_CATEGORIES, DEFAULT_EXPENSE_CATEGORIES } from '../constants';
 
@@ -28,24 +28,50 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [category, setCategory] = useState<string>(initialCategory);
   const [amount, setAmount] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>('');
+  const [referenceNumber, setReferenceNumber] = useState<string>('');
   const [date, setDate] = useState<string>(initialDate || new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState<string>(() => {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  const resetFormFields = () => {
+    setAmount('');
+    setDescription('');
+    setCustomerName('');
+    setReferenceNumber('');
+  };
+
+  const handleTypeSelect = (newType: TransactionType) => {
+    setType(newType);
+    if (!editingTransaction) {
+      resetFormFields();
+    }
+  };
+
+  const handleCategorySelect = (newCategory: string) => {
+    setCategory(newCategory);
+    if (!editingTransaction) {
+      resetFormFields();
+    }
+  };
 
   useEffect(() => {
+    setIsSubmitting(false);
     if (editingTransaction) {
       setType(editingTransaction.type);
       setCategory(editingTransaction.category);
       setAmount(editingTransaction.amount.toString());
       setDescription(editingTransaction.description || '');
+      setCustomerName(editingTransaction.customerName || '');
+      setReferenceNumber(editingTransaction.referenceNumber || '');
       setDate(editingTransaction.date);
       setTime(editingTransaction.time || '12:00 PM');
     } else {
       setType(initialType);
       setCategory(initialCategory);
-      setAmount('');
-      setDescription('');
+      resetFormFields();
       setDate(initialDate || new Date().toISOString().split('T')[0]);
       setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }
@@ -70,22 +96,50 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) return;
 
-    onSave(
-      {
-        date,
-        type,
-        category,
-        amount: numAmount,
-        description: description.trim() || `${category} Entry`,
-        time,
-      },
-      editingTransaction?.id
-    );
+    setIsSubmitting(true);
 
+    const trimmedCustName = customerName.trim();
+    const status = category === 'Cash Out'
+      ? (trimmedCustName ? 'CLAIMED' : 'UNCLAIMED')
+      : (editingTransaction?.status || 'CLAIMED');
+
+    const txData: any = {
+      date,
+      type,
+      category,
+      amount: numAmount,
+      description: description.trim() || `${category} Entry`,
+      time,
+      status,
+    };
+    if (referenceNumber.trim()) {
+      txData.referenceNumber = referenceNumber.trim();
+    }
+    if (trimmedCustName) {
+      txData.customerName = trimmedCustName;
+    }
+
+    // Perform save
+    onSave(txData, editingTransaction?.id);
+
+    // Completely clear all input fields immediately after saving
+    setAmount('');
+    setDescription('');
+    setCustomerName('');
+    setReferenceNumber('');
+
+    // Close modal
     onClose();
+
+    // Reset submit lock
+    setTimeout(() => {
+      setIsSubmitting(false);
+    }, 300);
   };
 
   const addQuickAmount = (val: number) => {
@@ -129,7 +183,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               <button
                 type="button"
                 disabled={isCategoryLocked}
-                onClick={() => setType('sales')}
+                onClick={() => handleTypeSelect('sales')}
                 className={`py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all ${
                   type === 'sales'
                     ? 'bg-emerald-600 text-white shadow-xs'
@@ -143,7 +197,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               <button
                 type="button"
                 disabled={isCategoryLocked}
-                onClick={() => setType('expense')}
+                onClick={() => handleTypeSelect('expense')}
                 className={`py-2 rounded-lg text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-all ${
                   type === 'expense'
                     ? 'bg-rose-600 text-white shadow-xs'
@@ -175,7 +229,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   <button
                     key={cat.name}
                     type="button"
-                    onClick={() => setCategory(cat.name)}
+                    onClick={() => handleCategorySelect(cat.name)}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold text-left transition-all ${
                       isSelected
                         ? type === 'sales'
@@ -189,6 +243,24 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 );
               })}
             </div>
+
+            {/* Auto-Consolidation Active Hint Banner */}
+            {['Cash In', 'Load', 'Billing Payments', 'Bills Payment', 'Billing Payment'].includes(category) && (
+              <div className="mt-2.5 p-3 rounded-xl bg-blue-50/90 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800 flex items-start gap-2.5 text-xs text-blue-900 dark:text-blue-200 animate-in fade-in duration-150">
+                <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold flex items-center gap-1.5 text-blue-900 dark:text-blue-100">
+                    <span>Daily Auto-Consolidation Active</span>
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-100">
+                      {category}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-blue-700 dark:text-blue-300 mt-0.5 leading-snug">
+                    Multiple <strong className="font-semibold">{category}</strong> entries logged on <strong className="font-semibold">{date}</strong> will automatically aggregate into a single daily record, updating the total amount and log count.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Amount Field & Quick Buttons */}
@@ -223,6 +295,47 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                   +{val}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Customer Name & Reference Number Fields */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                  Customer Name
+                </label>
+                {category === 'Cash Out' && (
+                  <span className={`text-[10px] font-extrabold ${customerName.trim() ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                    {customerName.trim() ? 'CLAIMED' : 'UNCLAIMED'}
+                  </span>
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder={category === 'Cash Out' ? "Blank = UNCLAIMED status" : "e.g. Juan Dela Cruz"}
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {category === 'Cash Out' && !customerName.trim() && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium block mt-1">
+                  * Leaving blank saves as UNCLAIMED cash-out
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">
+                Reference Number (Ref #)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. 10023458921"
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
           </div>
 
@@ -280,13 +393,22 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </button>
             <button
               type="submit"
-              className={`px-5 py-2 rounded-xl text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-95 ${
-                type === 'sales'
+              disabled={isSubmitting || !amount || parseFloat(amount) <= 0}
+              className={`px-5 py-2 rounded-xl text-white text-xs sm:text-sm font-bold shadow-md transition-all active:scale-95 flex items-center gap-1.5 ${
+                isSubmitting || !amount || parseFloat(amount) <= 0
+                  ? 'opacity-50 cursor-not-allowed bg-slate-400 dark:bg-slate-700 shadow-none'
+                  : type === 'sales'
                   ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'
                   : 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20'
               }`}
             >
-              {editingTransaction ? 'Update Entry' : 'Save Transaction'}
+              {isSubmitting ? (
+                <span>Saving...</span>
+              ) : editingTransaction ? (
+                'Update Entry'
+              ) : (
+                'Save Transaction'
+              )}
             </button>
           </div>
 

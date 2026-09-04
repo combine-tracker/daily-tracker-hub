@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Database, Download, Upload, ShieldCheck, History, RefreshCw, AlertTriangle, CheckCircle2, FileText, Sparkles, Trash2, Clock, RotateCcw } from 'lucide-react';
-import { Transaction, BackupSnapshot } from '../types';
-import { exportRecoveryFile, parseRecoveryFile, getAutoSnapshots, deleteAutoSnapshot, keepOnlyLatestSnapshot, clearAllSnapshots } from '../utils/storage';
-import { INITIAL_SAMPLE_TRANSACTIONS } from '../constants';
+import { Download, Upload, AlertTriangle, CheckCircle2, Trash2, RotateCcw, Smartphone, ShieldCheck, HardDrive, Wifi } from 'lucide-react';
+import { Transaction } from '../types';
+import { exportRecoveryFile, parseRecoveryFile } from '../utils/storage';
 
 interface RecoveryTabProps {
   transactions: Transaction[];
@@ -25,10 +24,8 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [snapshots, setSnapshots] = useState<BackupSnapshot[]>(() => getAutoSnapshots());
-
   // Handle Generate Dump button
-  const handleGenerateDump = () => {
+  const handleGenerateDump = async () => {
     setImportError(null);
     const dumpObject = {
       version: '1.0',
@@ -39,9 +36,9 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
     const jsonString = JSON.stringify(dumpObject, null, 2);
     setBackupText(jsonString);
 
-    // Also download file for user convenience
-    exportRecoveryFile(transactions);
-    setSuccessMessage(`Generated dump with ${transactions.length} transactions! Text displayed below and backup file downloaded.`);
+    // Download backup file (uses static daily-tracker-backup.json to overwrite/replace existing backup file)
+    await exportRecoveryFile(transactions);
+    setSuccessMessage(`Generated dump with ${transactions.length} transactions! Backup saved as daily-tracker-backup.json.`);
   };
 
   // Handle Inject / Restore State button
@@ -86,37 +83,6 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
     reader.readAsText(file);
   };
 
-  const handleDeleteSnapshot = (id: string) => {
-    const updated = deleteAutoSnapshot(id);
-    setSnapshots(updated);
-    setSuccessMessage('Snapshot restore point deleted successfully.');
-  };
-
-  const handleKeepOnlyRecent = () => {
-    if (snapshots.length <= 1) return;
-    if (window.confirm(`Keep only the most recent snapshot (${new Date(snapshots[0].timestamp).toLocaleTimeString()}) and delete the other ${snapshots.length - 1} old restore point(s)?`)) {
-      const updated = keepOnlyLatestSnapshot();
-      setSnapshots(updated);
-      setSuccessMessage(`Cleaned up old snapshots. Kept only the most recent restore point (${updated[0]?.itemCount || 0} records).`);
-    }
-  };
-
-  const handleClearAllSnapshots = () => {
-    if (snapshots.length === 0) return;
-    if (window.confirm('Are you sure you want to delete ALL auto-snapshot restore points?')) {
-      const updated = clearAllSnapshots();
-      setSnapshots(updated);
-      setSuccessMessage('All auto-snapshot restore points deleted.');
-    }
-  };
-
-  const handleRestoreSnapshot = (snapshot: BackupSnapshot) => {
-    if (window.confirm(`Restore ${snapshot.itemCount} records from auto-snapshot created on ${new Date(snapshot.timestamp).toLocaleString()}?`)) {
-      onRestoreTransactions(snapshot.data, false);
-      setSuccessMessage(`Restored ${snapshot.itemCount} transactions from snapshot point!`);
-    }
-  };
-
   const handleClearAllData = () => {
     if (window.confirm('Are you sure you want to clear all transactions from browser storage? Make sure you generated a dump first.')) {
       onResetData();
@@ -138,7 +104,7 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
             System Recovery & Backup
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Auto-save indicator, raw JSON dump tools, manual state injection, and restore points.
+            Auto-save indicator, raw JSON dump tools, and manual state injection.
           </p>
         </div>
       </div>
@@ -157,10 +123,10 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
         </div>
       )}
 
-      {/* Main Recovery Card matching uploaded reference screenshot */}
+      {/* Main Recovery Card matching user requirements */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-6">
         
-        {/* "How this works" explanation box */}
+        {/* "How this works" explanation box updated according to user request */}
         <div className="p-4 sm:p-5 rounded-2xl bg-sky-50/70 dark:bg-slate-800/80 border border-sky-100 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm space-y-2.5">
           <h3 className="font-bold text-sky-900 dark:text-sky-300 flex items-center gap-2 text-sm">
             How this works:
@@ -168,15 +134,15 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
           <ul className="space-y-2 text-slate-600 dark:text-slate-300 leading-relaxed">
             <li className="flex items-start gap-2">
               <span className="font-bold text-indigo-600 dark:text-indigo-400 shrink-0">• Auto-Save ON —</span>
-              <span>Your data is automatically saved to browser storage every time you make a change. It survives closing, refreshing, and reopening the page.</span>
+              <span>Your data is automatically saved directly to device storage (LocalStorage) on your mobile phone or computer in real-time. It survives closing the app, restarting your device, or launching from your Home Screen shortcut.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-indigo-600 dark:text-indigo-400 shrink-0">• Generate Dump —</span>
-              <span>Create a manual text backup for extra safety. Save this text to a file on your device.</span>
+              <span>Create a manual text JSON backup file (<code className="font-mono bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded text-[11px]">daily-tracker-backup.json</code>). Re-generating will replace/overwrite your previous backup file.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-indigo-600 dark:text-indigo-400 shrink-0">• Inject State —</span>
-              <span>Paste a previously saved dump to restore everything.</span>
+              <span>Paste or upload a previously saved dump to restore everything into browser storage.</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="font-bold text-indigo-600 dark:text-indigo-400 shrink-0">• Clear Data —</span>
@@ -254,111 +220,56 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
 
       </div>
 
-      {/* Auto Snapshot Restore Points */}
+      {/* PWA & Offline Details Section */}
       <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 rounded-xl text-indigo-600 dark:text-indigo-400">
+            <Smartphone className="w-5 h-5" />
+          </div>
           <div>
             <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-              <History className="w-5 h-5 text-indigo-600" />
-              Auto-Snapshot Restore Points
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                {snapshots.length}
-              </span>
+              PWA & Offline System Details
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              System-generated restore points created automatically during data updates.
+              Progressive Web App specifications and offline storage status.
             </p>
           </div>
-
-          {snapshots.length > 0 && (
-            <div className="flex items-center gap-2">
-              {snapshots.length > 1 && (
-                <button
-                  type="button"
-                  onClick={handleKeepOnlyRecent}
-                  className="px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-bold text-xs border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5 transition-colors cursor-pointer"
-                  title="Delete older snapshots and keep only the single most recent one"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                  <span>Keep Recent ({snapshots.length - 1} old)</span>
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={handleClearAllSnapshots}
-                className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/80 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-200 dark:border-rose-800 flex items-center gap-1 transition-colors cursor-pointer"
-                title="Delete all snapshots"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Delete All</span>
-              </button>
-            </div>
-          )}
         </div>
 
-        {snapshots.length === 0 ? (
-          <p className="text-xs text-slate-500">No snapshot history points logged yet.</p>
-        ) : (
-          <div className="space-y-2">
-            {snapshots.map((snap, idx) => (
-              <div
-                key={snap.id}
-                className={`p-3 rounded-xl border flex items-center justify-between gap-3 ${
-                  idx === 0
-                    ? 'border-indigo-200 dark:border-indigo-800/80 bg-indigo-50/50 dark:bg-indigo-950/40'
-                    : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Clock className={`w-4 h-4 ${idx === 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400'}`} />
-                  <div>
-                    <div className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-2">
-                      <span>Snapshot — {new Date(snap.timestamp).toLocaleString()}</span>
-                      {idx === 0 && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800">
-                          Most Recent
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[11px] text-slate-400">
-                      {snap.itemCount} items saved
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleRestoreSnapshot(snap)}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
-                  >
-                    Restore
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSnapshot(snap.id)}
-                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-rose-100 dark:hover:bg-rose-950/80 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-                    title="Delete this snapshot point"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-1">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold block">Service Worker</span>
+            <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 text-sm">
+              <CheckCircle2 className="w-4 h-4" />
+              Registered (/sw.js)
+            </div>
           </div>
-        )}
+
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-1">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold block">Persistence Mode</span>
+            <div className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5 text-sm">
+              <HardDrive className="w-4 h-4" />
+              100% LocalStorage
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-1">
+            <span className="text-slate-500 dark:text-slate-400 font-semibold block">Network Status</span>
+            <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 text-sm">
+              <Wifi className="w-4 h-4" />
+              Offline Capable
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Utility */}
       <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
           <h4 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
             Sample Data Utility
           </h4>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Reset dataset to initial rich sample data for testing purposes.
           </p>
         </div>
@@ -375,4 +286,3 @@ export const RecoveryTab: React.FC<RecoveryTabProps> = ({
     </div>
   );
 };
-

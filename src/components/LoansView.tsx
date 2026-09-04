@@ -239,114 +239,88 @@ export const LoansView: React.FC<LoansViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4">
 
       {/* Main Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
-            <HandCoins className="w-6 h-6" />
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-2.5 sm:p-3.5 border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
+            <HandCoins className="w-4 h-4 text-indigo-600" />
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              Loans & Credit Tracker (Utang & Pahiram)
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Track money lent out to customers/friends and money borrowed from banks or lenders.
-            </p>
-          </div>
+          <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+            Loans & Credit
+          </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+        <div className="grid grid-cols-2 gap-2 w-full sm:w-auto">
           <button
             onClick={() => handleOpenAddModal('loan_out')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>+ Lent Money</span>
           </button>
           <button
             onClick={() => handleOpenAddModal('loan_in')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>+ Borrowed Money</span>
           </button>
-          {onClearAllLoans && loans.length > 0 && (
-            <button
-              onClick={onClearAllLoans}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-all active:scale-95"
-              title="Reset all loan records to ₱0"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Reset All to ₱0</span>
-            </button>
-          )}
         </div>
       </div>
 
       {/* KPI Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
         
-        {/* Card 1: Loans Out (Money Lent / Collectibles) */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 shadow-xs space-y-2">
+        {/* Card 1: Collectibles */}
+        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
-              Lent Out (Collectibles / Utang ng iba)
+              Collectibles
             </span>
             <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded font-bold">
               Receivables
             </span>
           </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+          <div className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 truncate">
             {formatCurrency(stats.totalLentOutActive)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Active balance owed to you by borrowers.
-          </p>
         </div>
 
-        {/* Card 2: Loans In (Money Borrowed / Payables) */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-xs space-y-2">
+        {/* Card 2: Payables */}
+        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-rose-200 dark:border-rose-900/50 shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <ArrowDownLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-rose-500" />
-              Borrowed (Payables / Utang natin)
+              Payables
             </span>
             <span className="text-[10px] bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded font-bold">
               Liabilities
             </span>
           </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-rose-600 dark:text-rose-400 truncate">
+          <div className="text-xl sm:text-2xl font-black text-rose-600 dark:text-rose-400 truncate">
             {formatCurrency(stats.totalBorrowedActive)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Active debt owed by you to banks or persons.
-          </p>
         </div>
 
-        {/* Card 3: Net Position */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-indigo-200 dark:border-indigo-900/50 shadow-xs space-y-2">
+        {/* Card 3: Net Credit / Debt */}
+        <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Scale className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-500" />
-              Net Credit / Debt Position
+              Net Credit / Debt
             </span>
             <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold">
               Balance
             </span>
           </div>
-          <div className={`text-xl sm:text-2xl lg:text-3xl font-black truncate ${
+          <div className={`text-xl sm:text-2xl font-black truncate ${
             stats.netPosition >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'
           }`}>
             {stats.netPosition >= 0 ? `+${formatCurrency(stats.netPosition)}` : formatCurrency(stats.netPosition)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            {stats.netPosition >= 0
-              ? 'You have more receivables than active debts.'
-              : 'Your borrowed liabilities exceed receivables.'}
-          </p>
         </div>
 
       </div>

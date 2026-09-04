@@ -12,19 +12,9 @@ import {
   X,
   FileSpreadsheet,
   RefreshCw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  CartesianGrid,
-  Line,
-  ComposedChart,
-} from 'recharts';
 import { Transaction, CategoryName, TransactionType } from '../types';
 import { DEFAULT_SALES_CATEGORIES, DEFAULT_EXPENSE_CATEGORIES } from '../constants';
 import { formatCurrency, exportToCSV } from '../utils/storage';
@@ -52,6 +42,34 @@ export const DeepSearch: React.FC<DeepSearchProps> = ({
   const [typeFilter, setTypeFilter] = useState<'all' | 'sales' | 'expense'>('all');
   const [selectedCategories, setSelectedCategories] = useState<CategoryName[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Collapsible toggle states for compact mobile & desktop view
+  const [isDatePeriodOpen, setIsDatePeriodOpen] = useState<boolean>(false);
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState<boolean>(false);
+
+  const DATE_PRESETS: { id: typeof datePreset; label: string }[] = [
+    { id: 'this_month', label: 'This Month' },
+    { id: 'last_month', label: 'Last Month' },
+    { id: '7days', label: 'Last 7 Days' },
+    { id: '30days', label: 'Last 30 Days' },
+    { id: 'specific_month', label: 'Specific Month' },
+    { id: 'custom', label: 'Custom Range' },
+    { id: 'all', label: 'All Time' },
+  ];
+
+  const activeDatePresetLabel = useMemo(() => {
+    if (datePreset === 'specific_month' && selectedMonth) {
+      return `Month: ${selectedMonth}`;
+    }
+    if (datePreset === 'custom') {
+      if (startDate && endDate) return `${startDate} to ${endDate}`;
+      if (startDate) return `From ${startDate}`;
+      if (endDate) return `Until ${endDate}`;
+      return 'Custom Range';
+    }
+    const found = DATE_PRESETS.find(p => p.id === datePreset);
+    return found ? found.label : 'This Month';
+  }, [datePreset, selectedMonth, startDate, endDate]);
 
   // All available categories
   const allCategories = useMemo(() => {
@@ -133,26 +151,6 @@ export const DeepSearch: React.FC<DeepSearchProps> = ({
 
   const netCashFlow = totalDailySales - totalDailyExpenses;
 
-  // Chart Data: Daily Trends & Net Cash Flow
-  const dailyChartData = useMemo(() => {
-    const map: Record<string, { date: string; Sales: number; Expenses: number; NetCashFlow: number }> = {};
-
-    filteredTransactions.forEach(t => {
-      if (!map[t.date]) {
-        map[t.date] = { date: t.date, Sales: 0, Expenses: 0, NetCashFlow: 0 };
-      }
-      if (t.type === 'sales') map[t.date].Sales += t.amount;
-      else map[t.date].Expenses += t.amount;
-    });
-
-    return Object.values(map)
-      .map(item => ({
-        ...item,
-        NetCashFlow: item.Sales - item.Expenses,
-      }))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [filteredTransactions]);
-
   // Toggle Category selection
   const toggleCategory = (catName: string) => {
     if (selectedCategories.includes(catName)) {
@@ -179,11 +177,8 @@ export const DeepSearch: React.FC<DeepSearchProps> = ({
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Search className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-              Deep Search & Date Analytics
+              Deep Search
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Search & calculate totals for specific dates, custom date ranges, specific months, or categories.
-            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -205,76 +200,95 @@ export const DeepSearch: React.FC<DeepSearchProps> = ({
         </div>
 
         {/* Filter Bar Controls */}
-        <div className="mt-4 space-y-4">
+        <div className="mt-4 space-y-3">
           
-          {/* 1. Date Range Selector Presets */}
-          <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Date Period
-            </label>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {[
-                { id: 'this_month', label: 'This Month' },
-                { id: 'last_month', label: 'Last Month' },
-                { id: '7days', label: 'Last 7 Days' },
-                { id: '30days', label: 'Last 30 Days' },
-                { id: 'specific_month', label: 'Specific Month' },
-                { id: 'custom', label: 'Custom Range' },
-                { id: 'all', label: 'All Time' },
-              ].map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => handlePresetChange(p.id as any)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
-                    datePreset === p.id
-                      ? 'bg-indigo-600 text-white shadow-xs font-semibold'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                  }`}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Custom or Specific Month Pickers */}
-            {datePreset === 'specific_month' && (
-              <div className="pt-2 flex items-center gap-3">
-                <span className="text-xs text-slate-500 font-medium">Select Month:</span>
-                <input
-                  type="month"
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
-                />
+          {/* 1. Collapsible Date Period */}
+          <div className="border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-800/40 transition-all">
+            <button
+              type="button"
+              onClick={() => setIsDatePeriodOpen(!isDatePeriodOpen)}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                  Date Period
+                </span>
+                <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50 dark:border-indigo-800/50">
+                  {activeDatePresetLabel}
+                </span>
               </div>
-            )}
+              <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                <span className="text-[11px] font-medium hidden sm:inline">
+                  {isDatePeriodOpen ? 'Hide' : 'Change'}
+                </span>
+                {isDatePeriodOpen ? (
+                  <ChevronUp className="w-4 h-4" />
+                ) : (
+                  <ChevronDown className="w-4 h-4" />
+                )}
+              </div>
+            </button>
 
-            {datePreset === 'custom' && (
-              <div className="pt-2 flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500 font-medium">From:</span>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
-                  />
+            {isDatePeriodOpen && (
+              <div className="p-3 pt-1 border-t border-slate-200/60 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {DATE_PRESETS.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => handlePresetChange(p.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                        datePreset === p.id
+                          ? 'bg-indigo-600 text-white shadow-xs font-semibold'
+                          : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500 font-medium">To:</span>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
-                  />
-                </div>
+
+                {/* Custom or Specific Month Pickers */}
+                {datePreset === 'specific_month' && (
+                  <div className="pt-2 flex items-center gap-3">
+                    <span className="text-xs text-slate-500 font-medium">Select Month:</span>
+                    <input
+                      type="month"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                    />
+                  </div>
+                )}
+
+                {datePreset === 'custom' && (
+                  <div className="pt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 font-medium">From:</span>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500 font-medium">To:</span>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* 2. Type Filter & Keyword Search Input */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-1">
             <div>
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1">
                 Transaction Type
@@ -315,7 +329,7 @@ export const DeepSearch: React.FC<DeepSearchProps> = ({
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="e.g. Cash out, GCash, Smart, Meralco, Food..."
+                  placeholder=""
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-8 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -332,149 +346,124 @@ export const DeepSearch: React.FC<DeepSearchProps> = ({
             </div>
           </div>
 
-          {/* 3. Category Tags Picker */}
-          <div className="space-y-1.5 pt-1">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-              Filter By Specific Category
-            </label>
-            <div className="flex flex-wrap items-center gap-1.5">
-              {allCategories.map(cat => {
-                const isSelected = selectedCategories.includes(cat.name);
-                return (
-                  <button
-                    key={`${cat.type}-${cat.name}`}
-                    onClick={() => toggleCategory(cat.name)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white font-semibold shadow-2xs'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
-                    }`}
+          {/* 3. Collapsible Category Tags Picker */}
+          <div className="border border-slate-200/90 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50/60 dark:bg-slate-800/40 transition-all">
+            <button
+              type="button"
+              onClick={() => setIsCategoryFilterOpen(!isCategoryFilterOpen)}
+              className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Filter className="w-3.5 h-3.5 text-indigo-500" />
+                  Filter By Specific Category
+                </span>
+                {selectedCategories.length > 0 ? (
+                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-600 text-white shadow-2xs">
+                    {selectedCategories.length} selected
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+                    All Categories
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedCategories.length > 0 && (
+                  <span
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedCategories([]);
+                    }}
+                    className="text-[11px] text-rose-500 hover:text-rose-600 font-medium cursor-pointer mr-1"
                   >
-                    <span>{cat.name}</span>
-                    <span className="text-[10px] opacity-75">({cat.type === 'sales' ? 'Sales' : 'Exp'})</span>
-                    {isSelected && <X className="w-3 h-3 ml-0.5" />}
-                  </button>
-                );
-              })}
-            </div>
+                    Clear
+                  </span>
+                )}
+                <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
+                  <span className="text-[11px] font-medium hidden sm:inline">
+                    {isCategoryFilterOpen ? 'Hide' : 'Select'}
+                  </span>
+                  {isCategoryFilterOpen ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </div>
+              </div>
+            </button>
+
+            {isCategoryFilterOpen && (
+              <div className="p-3 pt-1 border-t border-slate-200/60 dark:border-slate-800 space-y-2">
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {allCategories.map(cat => {
+                    const isSelected = selectedCategories.includes(cat.name);
+                    return (
+                      <button
+                        key={`${cat.type}-${cat.name}`}
+                        onClick={() => toggleCategory(cat.name)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white font-semibold shadow-2xs'
+                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                        }`}
+                      >
+                        <span>{cat.name}</span>
+                        <span className="text-[10px] opacity-75">({cat.type === 'sales' ? 'Sales' : 'Exp'})</span>
+                        {isSelected && <X className="w-3 h-3 ml-0.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>
       </div>
 
-      {/* 3 Summary Cards: Total Daily Sales, Total Daily Expenses, Net Cash Flow */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Total Daily Sales */}
-        <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-emerald-500" />
-              Total Daily Sales
-            </span>
-            <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded font-bold">
-              Inflow
+      {/* 3 Summary Cards: Sales, Expenses, Net Cash (3-column row grid) */}
+      <div className="grid grid-cols-3 gap-1.5 sm:gap-4">
+        {/* Card 1: Sales */}
+        <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-emerald-200/80 dark:border-emerald-900/40 shadow-xs space-y-1 sm:space-y-1.5 flex flex-col justify-center">
+          <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
+            <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Sales
             </span>
           </div>
-          <div className="font-extrabold text-2xl sm:text-3xl text-emerald-600 dark:text-emerald-400 truncate">
+          <div className="font-extrabold text-xs sm:text-xl lg:text-2xl text-emerald-600 dark:text-emerald-400 truncate tracking-tight">
             {formatCurrency(totalDailySales)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Total sales registered in filtered period
-          </p>
         </div>
 
-        {/* Card 2: Total Daily Expenses */}
-        <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-rose-200/80 dark:border-rose-900/40 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
-              <TrendingDown className="w-4 h-4 text-rose-500" />
-              Total Daily Expenses
-            </span>
-            <span className="text-[10px] bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded font-bold">
-              Outflow
+        {/* Card 2: Expenses */}
+        <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-rose-200/80 dark:border-rose-900/40 shadow-xs space-y-1 sm:space-y-1.5 flex flex-col justify-center">
+          <div className="flex items-center gap-1 text-rose-700 dark:text-rose-400">
+            <TrendingDown className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Expenses
             </span>
           </div>
-          <div className="font-extrabold text-2xl sm:text-3xl text-rose-600 dark:text-rose-400 truncate">
+          <div className="font-extrabold text-xs sm:text-xl lg:text-2xl text-rose-600 dark:text-rose-400 truncate tracking-tight">
             {formatCurrency(totalDailyExpenses)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Total expenses registered in filtered period
-          </p>
         </div>
 
-        {/* Card 3: Net Cash Flow */}
-        <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-indigo-500" />
-              Net Cash Flow
-            </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-              netCashFlow >= 0
-                ? 'bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300'
-                : 'bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300'
-            }`}>
-              {netCashFlow >= 0 ? 'Surplus' : 'Deficit'}
+        {/* Card 3: Net Cash */}
+        <div className="bg-white dark:bg-slate-900 p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs space-y-1 sm:space-y-1.5 flex flex-col justify-center">
+          <div className="flex items-center gap-1 text-indigo-700 dark:text-indigo-400">
+            <Activity className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider truncate">
+              Net Cash
             </span>
           </div>
-          <div className={`font-extrabold text-2xl sm:text-3xl truncate ${
+          <div className={`font-extrabold text-xs sm:text-xl lg:text-2xl truncate tracking-tight ${
             netCashFlow >= 0 ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'
           }`}>
             {formatCurrency(netCashFlow)}
           </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Daily Sales minus Daily Expenses
-          </p>
         </div>
-      </div>
-
-      {/* Visual Charts Section: Daily Cash Flow & Sales Trend */}
-      <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
-              <Activity className="w-4 h-4 text-indigo-600" />
-              Daily Cash Flow & Sales Trend
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Visual comparison of Daily Sales, Daily Expenses, and Net Cash Flow trajectory over time.
-            </p>
-          </div>
-          <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800">
-            {dailyChartData.length} Active Days
-          </span>
-        </div>
-
-        {dailyChartData.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 text-sm">
-            No daily transaction data found for the current filter criteria. Try adjusting the date range or search parameters above.
-          </div>
-        ) : (
-          <div className="h-72 sm:h-80 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={dailyChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" opacity={0.5} />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(val) => `₱${val}`} />
-                <Tooltip
-                  formatter={(value: any, name: any) => [
-                    `₱${Number(value).toLocaleString()}`,
-                    name === 'Sales' ? 'Daily Sales' : name === 'Expenses' ? 'Daily Expenses' : 'Net Cash Flow',
-                  ]}
-                  contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#fff', borderRadius: '12px' }}
-                />
-                <Legend formatter={(value) => (
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    {value === 'Sales' ? 'Daily Sales (Inflow)' : value === 'Expenses' ? 'Daily Expenses (Outflow)' : 'Net Cash Flow'}
-                  </span>
-                )} />
-                <Bar dataKey="Sales" fill="#10b981" radius={[4, 4, 0, 0]} name="Sales" />
-                <Bar dataKey="Expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Expenses" />
-                <Line type="monotone" dataKey="NetCashFlow" stroke="#6366f1" strokeWidth={3} dot={{ r: 4 }} name="NetCashFlow" />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        )}
       </div>
 
     </div>

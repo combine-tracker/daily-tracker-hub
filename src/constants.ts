@@ -21,6 +21,7 @@ export const STORAGE_KEY_LAST_AUTOSAVE = 'daily_tracker_last_autosave_v1';
 export const STORAGE_KEY_CASH_MONITORING = 'daily_tracker_cash_monitoring_v1';
 export const STORAGE_KEY_LOANS = 'daily_tracker_loans_v1';
 export const STORAGE_KEY_CREDITS = 'daily_tracker_credits_v1';
+export const STORAGE_KEY_SUBSCRIPTIONS = 'daily_tracker_subscriptions_v1';
 
 export const INITIAL_DEFAULT_CREDIT_ACCOUNTS = [
   {
@@ -91,3 +92,4 @@ export const INITIAL_CASH_MONITORING_STATE = {
 
 // Start with empty dataset so user encodes everything from scratch
 export const INITIAL_SAMPLE_TRANSACTIONS: Transaction[] = [];
+export const INITIAL_SAMPLE_SUBSCRIPTIONS: any[] = [];

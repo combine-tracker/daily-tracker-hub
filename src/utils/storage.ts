@@ -1,5 +1,106 @@
-import { Transaction, BackupSnapshot, BackupFileStructure, CashMonitoringState, LoanRecord, CreditAccount } from '../types';
-import { STORAGE_KEY_TRANSACTIONS, STORAGE_KEY_SNAPSHOTS, STORAGE_KEY_LAST_AUTOSAVE, STORAGE_KEY_CASH_MONITORING, STORAGE_KEY_LOANS, STORAGE_KEY_CREDITS, INITIAL_SAMPLE_TRANSACTIONS, INITIAL_CASH_MONITORING_STATE, INITIAL_SAMPLE_LOANS, INITIAL_DEFAULT_CREDIT_ACCOUNTS } from '../constants';
+import { Transaction, BackupSnapshot, BackupFileStructure, CashMonitoringState, LoanRecord, CreditAccount, SubscriptionItem } from '../types';
+import { STORAGE_KEY_TRANSACTIONS, STORAGE_KEY_SNAPSHOTS, STORAGE_KEY_LAST_AUTOSAVE, STORAGE_KEY_CASH_MONITORING, STORAGE_KEY_LOANS, STORAGE_KEY_CREDITS, STORAGE_KEY_SUBSCRIPTIONS, INITIAL_SAMPLE_TRANSACTIONS, INITIAL_CASH_MONITORING_STATE, INITIAL_SAMPLE_LOANS, INITIAL_DEFAULT_CREDIT_ACCOUNTS, INITIAL_SAMPLE_SUBSCRIPTIONS } from '../constants';
+
+export function getCanonicalCategory(cat: string): string {
+  if (!cat) return '';
+  const trimmed = cat.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'cash in' || lower === 'cash-in' || lower === 'cashin') return 'Cash In';
+  if (lower === 'cash out' || lower === 'cash-out' || lower === 'cashout') return 'Cash Out';
+  if (lower === 'load' || lower === 'e-load' || lower === 'eload') return 'Load';
+  if (
+    lower === 'billing payments' ||
+    lower === 'bills payment' ||
+    lower === 'billing payment' ||
+    lower === 'bills payments' ||
+    lower === 'bill payment' ||
+    lower === 'bills'
+  ) return 'Billing Payments';
+  return trimmed;
+}
+
+export const AUTO_CONSOLIDATING_CATEGORIES = new Set(['Cash In', 'Load', 'Billing Payments']);
+
+export interface ConsolidationResult {
+  consolidated: Transaction[];
+  removedIds: string[];
+}
+
+export function consolidateAutoCategories(items: Transaction[]): ConsolidationResult {
+  if (!Array.isArray(items)) return { consolidated: [], removedIds: [] };
+
+  const consolidatedMap = new Map<string, Transaction>();
+  const result: Transaction[] = [];
+  const removedIds: string[] = [];
+
+  for (const rawItem of items) {
+    if (!rawItem || !rawItem.category || !rawItem.date) continue;
+
+    const canonicalCat = getCanonicalCategory(rawItem.category);
+    const cleanDate = rawItem.date.split('T')[0].trim();
+    const item: Transaction = {
+      ...rawItem,
+      category: canonicalCat,
+      date: cleanDate,
+    };
+
+    if (AUTO_CONSOLIDATING_CATEGORIES.has(canonicalCat)) {
+      const key = `${cleanDate}_${item.type}_${canonicalCat}`;
+
+      if (consolidatedMap.has(key)) {
+        const existing = consolidatedMap.get(key)!;
+        
+        // Merge into existing daily record
+        existing.amount = (Number(existing.amount) || 0) + (Number(item.amount) || 0);
+        existing.count = (existing.count || 1) + (item.count || 1);
+        
+        if (item.time) existing.time = item.time;
+        existing.updatedAt = new Date().toISOString();
+
+        const defaultDesc = `${canonicalCat} Entry`;
+        if (item.description && item.description !== defaultDesc) {
+          if (!existing.description || existing.description === defaultDesc) {
+            existing.description = item.description;
+          } else if (!existing.description.includes(item.description)) {
+            existing.description = `${existing.description}, ${item.description}`;
+          }
+        }
+
+        if (item.customerName) {
+          if (!existing.customerName) {
+            existing.customerName = item.customerName;
+          } else if (!existing.customerName.includes(item.customerName)) {
+            existing.customerName = `${existing.customerName}, ${item.customerName}`;
+          }
+        }
+
+        if (item.referenceNumber) {
+          if (!existing.referenceNumber) {
+            existing.referenceNumber = item.referenceNumber;
+          } else if (!existing.referenceNumber.includes(item.referenceNumber)) {
+            existing.referenceNumber = `${existing.referenceNumber}, ${item.referenceNumber}`;
+          }
+        }
+
+        // Keep track of secondary ID for deletion
+        if (item.id && item.id !== existing.id) {
+          removedIds.push(item.id);
+        }
+      } else {
+        const copy: Transaction = {
+          ...item,
+          count: item.count || 1,
+        };
+        consolidatedMap.set(key, copy);
+        result.push(copy);
+      }
+    } else {
+      result.push(item);
+    }
+  }
+
+  return { consolidated: result, removedIds };
+}
 
 export function loadStoredTransactions(): Transaction[] {
   try {
@@ -9,7 +110,12 @@ export function loadStoredTransactions(): Transaction[] {
       return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    const transactions = Array.isArray(parsed) ? parsed : [];
+    const { consolidated, removedIds } = consolidateAutoCategories(transactions);
+    if (removedIds.length > 0) {
+      saveTransactionsToStorage(consolidated, 'Auto-consolidation clean up');
+    }
+    return consolidated;
   } catch (err) {
     console.error('Failed to parse transactions from localStorage', err);
     return [];
@@ -118,6 +224,30 @@ export function saveStoredCreditAccounts(accounts: CreditAccount[]): void {
   }
 }
 
+// Subscriptions Storage Helpers
+export function loadStoredSubscriptions(): SubscriptionItem[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SUBSCRIPTIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEY_SUBSCRIPTIONS, JSON.stringify([]));
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error('Failed to load subscriptions from localStorage', err);
+    return [];
+  }
+}
+
+export function saveStoredSubscriptions(items: SubscriptionItem[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_SUBSCRIPTIONS, JSON.stringify(items));
+  } catch (err) {
+    console.error('Failed to save subscriptions to localStorage', err);
+  }
+}
+
 
 // Snapshot system for auto-recovery points
 export function getAutoSnapshots(): BackupSnapshot[] {
@@ -185,8 +315,8 @@ export function createAutoSnapshot(transactions: Transaction[], reason: string):
   }
 }
 
-// Export Recovery File as JSON
-export function exportRecoveryFile(transactions: Transaction[]): void {
+// Export Recovery File as JSON (uses constant filename daily-tracker-backup.json to overwrite existing backup)
+export async function exportRecoveryFile(transactions: Transaction[]): Promise<void> {
   const fileData: BackupFileStructure = {
     app: 'Daily Sales & Expense Tracker',
     version: '1.0',
@@ -196,12 +326,31 @@ export function exportRecoveryFile(transactions: Transaction[]): void {
   };
 
   const jsonStr = JSON.stringify(fileData, null, 2);
+
+  // Try modern File System Access API if available for overwriting existing file
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as any).showSaveFilePicker({
+        suggestedName: 'daily-tracker-backup.json',
+        types: [{
+          description: 'JSON Backup File',
+          accept: { 'application/json': ['.json'] },
+        }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(jsonStr);
+      await writable.close();
+      return;
+    } catch (err: any) {
+      if (err.name === 'AbortError') return; // User cancelled
+      // Fallback to standard download if user browser blocks picker
+    }
+  }
+
+  // Standard fallback download with fixed static filename daily-tracker-backup.json
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-
-  const dateStr = new Date().toISOString().split('T')[0];
-  const timeStr = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-  const filename = `Daily_Tracker_Recovery_File_${dateStr}_${timeStr}.json`;
+  const filename = `daily-tracker-backup.json`;
 
   const link = document.createElement('a');
   link.href = url;

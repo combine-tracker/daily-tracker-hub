@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, Calendar, ChevronDown, ChevronUp, PlusCircle, ArrowDownLeft, ArrowUpRight, Receipt, Smartphone, Edit2, Trash2, Clock, Sparkles } from 'lucide-react';
+import { TrendingUp, Calendar, ChevronDown, ChevronUp, PlusCircle, ArrowDownLeft, ArrowUpRight, Receipt, Smartphone, Edit2, Trash2, Clock, Sparkles, UserCheck, Hash } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
 import { DEFAULT_SALES_CATEGORIES } from '../constants';
 import { formatCurrency } from '../utils/storage';
+import { UnclaimedCashOutsCard } from './UnclaimedCashOutsCard';
 
 interface SalesViewProps {
   transactions: Transaction[];
@@ -10,6 +11,7 @@ interface SalesViewProps {
   onEditTransaction: (tx: Transaction) => void;
   onDeleteTransaction: (id: string) => void;
   onDeleteDayTransactions?: (dateStr: string, type?: TransactionType) => void;
+  onClaimCashOut?: (id: string, customerName: string) => void;
 }
 
 export const SalesView: React.FC<SalesViewProps> = ({
@@ -18,6 +20,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
   onEditTransaction,
   onDeleteTransaction,
   onDeleteDayTransactions,
+  onClaimCashOut,
 }) => {
   // Filter sales only
   const salesTransactions = useMemo(() => {
@@ -137,39 +140,32 @@ export const SalesView: React.FC<SalesViewProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4">
       
       {/* Sales Overview Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-5 border border-emerald-200/80 dark:border-emerald-900/40 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white">
-                Daily Sales Log & Monthly Hierarchy
-              </h2>
-              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
-                Cash In, Cash Out, Billing Payments, and Load sales breakdown
-              </p>
-            </div>
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-2.5 sm:p-3.5 border border-emerald-200/80 dark:border-emerald-900/40 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
+            <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
+          <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+            Daily Sales Log & Monthly
+          </h2>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-1.5 sm:pt-0 border-slate-100 dark:border-slate-800">
           <div className="text-left sm:text-right">
-            <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Sales</span>
-            <span className="text-lg sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Sales</span>
+            <span className="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400">
               {formatCurrency(totalSalesAllTime)}
             </span>
           </div>
 
           <button
             onClick={() => onOpenAddModal('sales', 'Cash In')}
-            className="flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-500/20 transition-all active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-3.5 h-3.5" />
             <span>+ Log Sales</span>
           </button>
         </div>
@@ -199,6 +195,15 @@ export const SalesView: React.FC<SalesViewProps> = ({
           );
         })}
       </div>
+
+      {/* Centralized Unclaimed Cash-Outs Tracker Card */}
+      {onClaimCashOut && (
+        <UnclaimedCashOutsCard
+          transactions={transactions}
+          onClaimCashOut={onClaimCashOut}
+          onEditTransaction={onEditTransaction}
+        />
+      )}
 
       {/* Month -> Day Collapsible List */}
       {monthlyGroups.length === 0 ? (
@@ -302,13 +307,15 @@ export const SalesView: React.FC<SalesViewProps> = ({
                             </div>
                           </div>
 
-                          {/* Quick Formula Summary Banner */}
-                          <div className="px-4 py-1.5 bg-emerald-50/60 dark:bg-emerald-950/30 border-t border-b border-emerald-100 dark:border-emerald-900/50 text-[11px] text-emerald-900 dark:text-emerald-300 font-medium flex items-center justify-between gap-2">
-                            <span className="flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                              <strong>Summary:</strong> {dayGroup.formulaText}
-                            </span>
-                            <div className="flex items-center gap-2 shrink-0">
+                          {/* Quick Formula Summary Banner - Sleek Horizontal Line */}
+                          <div className="px-3 sm:px-4 py-1.5 bg-emerald-50/60 dark:bg-emerald-950/30 border-t border-b border-emerald-100 dark:border-emerald-900/50 text-[11px] text-emerald-900 dark:text-emerald-300 font-medium flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="truncate">
+                                <strong>Summary:</strong> {dayGroup.formulaText}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-end gap-1.5 shrink-0 text-[10px]">
                               {onDeleteDayTransactions && (
                                 <button
                                   type="button"
@@ -317,10 +324,10 @@ export const SalesView: React.FC<SalesViewProps> = ({
                                     e.stopPropagation();
                                     onDeleteDayTransactions(dayGroup.date, 'sales');
                                   }}
-                                  className="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center gap-1 transition-colors active:scale-95"
+                                  className="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/80 hover:bg-rose-200 text-rose-700 dark:text-rose-300 font-bold flex items-center gap-1 transition-colors active:scale-95 cursor-pointer"
                                   title={`Delete all sales for ${dayGroup.date}`}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                                  <Trash2 className="w-3 h-3 text-rose-600 dark:text-rose-400" />
                                   <span>Delete Day</span>
                                 </button>
                               )}
@@ -331,51 +338,81 @@ export const SalesView: React.FC<SalesViewProps> = ({
                                   e.stopPropagation();
                                   onOpenAddModal('sales', 'Cash In', dayGroup.date);
                                 }}
-                                className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 font-bold text-[11px] transition-colors active:scale-95"
+                                className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 hover:bg-emerald-200 text-emerald-800 dark:text-emerald-300 font-bold transition-colors active:scale-95 cursor-pointer"
                               >
                                 + Add to date
                               </button>
                             </div>
                           </div>
 
-                          {/* Detailed Items list for this day */}
+                          {/* Detailed Items list for this day - Horizontal Line Style */}
                           {isDayOpen && (
-                            <div className="p-3 space-y-2 bg-slate-50/50 dark:bg-slate-900/30">
+                            <div className="p-2 sm:p-3 space-y-1.5 bg-slate-50/50 dark:bg-slate-900/30">
                               {dayGroup.txs.map((tx) => (
                                 <div
                                   key={tx.id}
-                                  className="bg-white dark:bg-slate-800 p-2.5 sm:p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 shadow-xs"
+                                  className="bg-white dark:bg-slate-800 p-2 sm:p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 shadow-2xs hover:border-emerald-300 transition-colors"
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <div className="px-2 py-1 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 font-bold text-xs">
+                                  {/* Left: Category Badge + Title & Meta in 1 Horizontal Block */}
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    <div className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] shrink-0">
                                       {tx.category}
                                     </div>
-                                    <div>
-                                      <div className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white">
-                                        {tx.description || tx.category}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white truncate">
+                                        <span className="truncate">{tx.description || tx.category}</span>
+                                        {tx.count && tx.count > 1 && (
+                                          <span className="px-1 py-0.2 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[9px] font-extrabold shrink-0">
+                                            {tx.count}x
+                                          </span>
+                                        )}
+                                        <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                                          • {tx.time || '12:00 PM'}
+                                        </span>
                                       </div>
-                                      <div className="text-[10px] text-slate-400 flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        {tx.time || '12:00 PM'}
-                                      </div>
+
+                                      {(tx.customerName || tx.referenceNumber || tx.category === 'Cash Out') && (
+                                        <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                                          {tx.customerName && (
+                                            <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                              Cust: {tx.customerName}
+                                            </span>
+                                          )}
+                                          {tx.referenceNumber && (
+                                            <span className="font-mono text-slate-400 truncate">
+                                              Ref: {tx.referenceNumber}
+                                            </span>
+                                          )}
+                                          {tx.category === 'Cash Out' && (
+                                            <span className={`px-1 py-0.2 rounded font-extrabold text-[9px] uppercase shrink-0 ${
+                                              tx.status === 'CLAIMED' || tx.customerName
+                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                            }`}>
+                                              {tx.status === 'CLAIMED' || tx.customerName ? 'CLAIMED' : 'UNCLAIMED'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
 
-                                  <div className="flex items-center gap-3">
-                                    <span className="font-bold text-sm text-emerald-600 dark:text-emerald-400">
+                                  {/* Right: Amount & Actions on 1 Line */}
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className="font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
                                       {formatCurrency(tx.amount)}
                                     </span>
-                                    <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700">
+                                    <div className="flex items-center gap-0.5 pl-1.5 border-l border-slate-200 dark:border-slate-700">
                                       <button
                                         onClick={() => onEditTransaction(tx)}
-                                        className="p-1 rounded text-slate-400 hover:text-indigo-600"
+                                        className="p-1 rounded text-slate-400 hover:text-indigo-600 transition-colors"
                                         title="Edit"
                                       >
                                         <Edit2 className="w-3.5 h-3.5" />
                                       </button>
                                       <button
                                         onClick={() => onDeleteTransaction(tx.id)}
-                                        className="p-1 rounded text-slate-400 hover:text-rose-600"
+                                        className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors"
                                         title="Delete"
                                       >
                                         <Trash2 className="w-3.5 h-3.5" />

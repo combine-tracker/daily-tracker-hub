@@ -141,23 +141,49 @@ export const TransactionAccordion: React.FC<TransactionAccordionProps> = ({
               {transactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-lg p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-xs hover:border-slate-300 transition-colors"
+                  className="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-lg p-2 sm:p-2.5 flex items-center justify-between gap-2 shadow-2xs hover:border-indigo-300 transition-colors"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
-                        {tx.description || `${tx.category} Entry`}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        {tx.time || '12:00 PM'}
-                      </span>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900 dark:text-white truncate">
+                        <span className="truncate">{tx.description || `${tx.category} Entry`}</span>
+                        {tx.count && tx.count > 1 && (
+                          <span className="px-1 py-0.2 rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[9px] font-extrabold shrink-0">
+                            {tx.count}x
+                          </span>
+                        )}
+                        <span className="text-[10px] text-slate-400 font-normal shrink-0">
+                          • {tx.time || '12:00 PM'}
+                        </span>
+                      </div>
+
+                      {(tx.customerName || tx.referenceNumber || tx.category === 'Cash Out') && (
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 truncate mt-0.5">
+                          {tx.customerName && (
+                            <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">
+                              Cust: {tx.customerName}
+                            </span>
+                          )}
+                          {tx.referenceNumber && (
+                            <span className="font-mono text-slate-400 truncate">
+                              Ref: {tx.referenceNumber}
+                            </span>
+                          )}
+                          {tx.category === 'Cash Out' && (
+                            <span className={`px-1 py-0.2 rounded font-extrabold text-[9px] uppercase shrink-0 ${
+                              tx.status === 'CLAIMED' || tx.customerName
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                            }`}>
+                              {tx.status === 'CLAIMED' || tx.customerName ? 'CLAIMED' : 'UNCLAIMED'}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 shrink-0">
                     <div className={`font-bold text-xs sm:text-sm ${
                       tx.type === 'sales'
                         ? 'text-emerald-600 dark:text-emerald-400'
@@ -166,17 +192,17 @@ export const TransactionAccordion: React.FC<TransactionAccordionProps> = ({
                       {formatCurrency(tx.amount)}
                     </div>
 
-                    <div className="flex items-center gap-1 pl-2 border-l border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center gap-0.5 pl-1.5 border-l border-slate-200 dark:border-slate-700">
                       <button
                         onClick={() => onEditTransaction(tx)}
-                        className="p-1.5 rounded-md text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="p-1 rounded text-slate-400 hover:text-indigo-600 transition-colors"
                         title="Edit transaction"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => onDeleteTransaction(tx.id)}
-                        className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors"
                         title="Delete transaction"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

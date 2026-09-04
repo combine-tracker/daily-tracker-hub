@@ -267,7 +267,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
   const accountCards: {
     key: keyof EWalletBankBalances;
     label: string;
-    sublabel: string;
     icon: React.ReactNode;
     colorClass: string;
     bgClass: string;
@@ -275,7 +274,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'gcash',
       label: 'GCash',
-      sublabel: 'E-Wallet & Cash In/Out',
       icon: <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />,
       colorClass: 'text-blue-600 dark:text-blue-400',
       bgClass: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800',
@@ -283,7 +281,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'maya',
       label: 'Maya',
-      sublabel: 'Wallet & Savings Account',
       icon: <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />,
       colorClass: 'text-emerald-600 dark:text-emerald-400',
       bgClass: 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800',
@@ -291,7 +288,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'palawanPay',
       label: 'Palawan Pay',
-      sublabel: 'Remittance & Wallet',
       icon: <DollarSign className="w-5 h-5 text-amber-600 dark:text-amber-400" />,
       colorClass: 'text-amber-600 dark:text-amber-400',
       bgClass: 'bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800',
@@ -299,7 +295,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'goTyme',
       label: 'GoTyme Bank',
-      sublabel: 'Digital Bank & Rewards',
       icon: <Building2 className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
       colorClass: 'text-cyan-600 dark:text-cyan-400',
       bgClass: 'bg-cyan-50 dark:bg-cyan-950/40 border-cyan-200 dark:border-cyan-800',
@@ -307,7 +302,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'seaBank',
       label: 'SeaBank',
-      sublabel: 'Shopee High Yield Savings',
       icon: <PiggyBank className="w-5 h-5 text-orange-600 dark:text-orange-400" />,
       colorClass: 'text-orange-600 dark:text-orange-400',
       bgClass: 'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-800',
@@ -315,7 +309,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'savings',
       label: 'Savings / Bank',
-      sublabel: 'Traditional Bank Savings (BPI/BDO/Metrobank)',
       icon: <Landmark className="w-5 h-5 text-purple-600 dark:text-purple-400" />,
       colorClass: 'text-purple-600 dark:text-purple-400',
       bgClass: 'bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800',
@@ -323,7 +316,6 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
     {
       key: 'cashOnHand',
       label: 'Cash on Hand',
-      sublabel: 'Physical Cash Drawer & Vault',
       icon: <CreditCard className="w-5 h-5 text-slate-700 dark:text-slate-300" />,
       colorClass: 'text-slate-700 dark:text-slate-300',
       bgClass: 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700',
@@ -331,287 +323,230 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 sm:space-y-4 font-sans">
 
       {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-5 border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="p-2.5 sm:p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
-            <Scale className="w-5 h-5 sm:w-6 sm:h-6" />
+      <div className="bg-white dark:bg-slate-900 rounded-xl p-3 sm:p-4 border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
+            <Scale className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <h2 className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white flex flex-wrap items-center gap-1.5">
               Cash Monitoring & Reconciliation
-              <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
-                Year {currentYear}
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                {currentYear}
               </span>
             </h2>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Compare your expected book balance against physical cash & e-wallet balances in real-time.
-            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto border-t md:border-t-0 pt-2 md:pt-0 border-slate-100 dark:border-slate-800 w-full md:w-auto justify-end">
+        <div className="flex items-center gap-2 self-start sm:self-auto border-t sm:border-t-0 pt-1.5 sm:pt-0 border-slate-100 dark:border-slate-800 w-full sm:w-auto justify-end">
           <button
             onClick={handleResetOverridesToAuto}
-            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all"
             title="Resync Sales & Expenses from logged transactions"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Recalculate from Log</span>
+            <RefreshCw className="w-3 h-3" />
+            <span>Recalculate Log</span>
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-        
-        {/* Card 1: Expected Book Cash Balance */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5 sm:space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <CalendarCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-500" />
-              Expected Book Balance
-            </span>
-            <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded font-medium">
-              Calculated
-            </span>
-          </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white truncate">
-            {formatCurrency(expectedBookBalance)}
-          </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
-            <div className="flex justify-between">
-              <span>Beginning Cash ({currentYear}):</span>
-              <strong className="text-slate-700 dark:text-slate-200">{formatCurrency(cashState.beginningCashThisYear)}</strong>
+      {/* Equal-Sized Summary Cards Container: Book Balance & Reconciliation Summary + Actual Cash Distribution Ratio */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-stretch">
+
+        {/* CARD 1: BOOK BALANCE & RECONCILIATION SUMMARY */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
+                <Scale className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                  Book Balance & Reconciliation Summary
+                </h3>
+              </div>
             </div>
-            <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-              <span>+ Accumulated Sales:</span>
-              <strong>+{formatCurrency(effectiveSales)}</strong>
-            </div>
-            <div className="flex justify-between text-rose-600 dark:text-rose-400">
-              <span>- Accumulated Expenses:</span>
-              <strong>-{formatCurrency(effectiveExpenses)}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Actual Remaining Cash (Sum of Wallets & Banks) */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5 sm:space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-500" />
-              Actual Remaining Cash
-            </span>
-            <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded font-medium">
-              Imputed Accounts
+            <span className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold uppercase tracking-wider shrink-0">
+              Summary
             </span>
           </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 truncate">
-            {formatCurrency(actualRemainingCash)}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
-            Sum of all e-wallets, bank balances, and physical cash on hand entered below.
-          </p>
-        </div>
 
-        {/* Card 3: Settlement Difference / Discrepancy */}
-        <div className={`p-3.5 sm:p-5 rounded-2xl border shadow-xs space-y-2.5 sm:space-y-3 ${
-          difference === 0
-            ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800'
-            : difference > 0
-            ? 'bg-blue-50/70 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800'
-            : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800'
-        }`}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-600 dark:text-slate-300">
-              <Scale className="w-4 h-4" />
-              Settlement Difference
-            </span>
-            {difference === 0 ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-emerald-600 text-white font-bold flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" /> Reconciled
-              </span>
-            ) : difference > 0 ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-blue-600 text-white font-bold flex items-center gap-1">
-                <TrendingUp className="w-3 h-3" /> Cash Surplus
-              </span>
-            ) : (
-              <span className="text-xs px-2 py-0.5 rounded bg-rose-600 text-white font-bold flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" /> Discrepancy
-              </span>
-            )}
-          </div>
-
-          <div className={`text-2xl sm:text-3xl font-black ${
-            difference === 0
-              ? 'text-emerald-700 dark:text-emerald-300'
-              : difference > 0
-              ? 'text-blue-700 dark:text-blue-300'
-              : 'text-rose-700 dark:text-rose-300'
-          }`}>
-            {difference > 0 ? `+${formatCurrency(difference)}` : formatCurrency(difference)}
-          </div>
-
-          <p className="text-[11px] font-medium leading-relaxed">
-            {difference === 0 && (
-              <span className="text-emerald-800 dark:text-emerald-200">
-                ✅ <strong>Perfect Match:</strong> Physical cash & bank balances exactly match your book calculations.
-              </span>
-            )}
-            {difference > 0 && (
-              <span className="text-blue-800 dark:text-blue-200">
-                📈 <strong>Cash Overage:</strong> You have {formatCurrency(difference)} more in actual accounts than book records show.
-              </span>
-            )}
-            {difference < 0 && (
-              <span className="text-rose-800 dark:text-rose-200">
-                ⚠️ <strong>Shortage Alert:</strong> You are missing {formatCurrency(Math.abs(difference))} in physical accounts compared to your expected book balance.
-              </span>
-            )}
-          </p>
-        </div>
-
-      </div>
-
-      {/* CASH DISTRIBUTION PIE CHART CARD */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 shrink-0">
-              <PieChartIcon className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                Actual Cash Distribution Ratio
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Visual breakdown between Physical Cash, E-Wallets, and Bank Balances
-              </p>
-            </div>
-          </div>
-          <div className="text-left sm:text-right">
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Total Actual Cash</span>
-            <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-              {formatCurrency(breakdownData.total)}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Pie Chart Display */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center min-h-[220px]">
-            {breakdownData.total > 0 ? (
-              <div className="w-full h-56 relative flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={breakdownData.items}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {breakdownData.items.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(val: any) => [formatCurrency(Number(val) || 0), 'Balance']}
-                      contentStyle={{
-                        backgroundColor: '#0f172a',
-                        borderColor: '#334155',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-
-                {/* Donut Center Display */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Cash</span>
-                  <span className="text-xs font-black text-slate-900 dark:text-white px-2">
-                    {formatCurrency(breakdownData.total)}
+          {/* LIST TYPE CONTAINER FOR CARD 1 */}
+          <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex-1 flex flex-col justify-between">
+            
+            {/* Item 1: Expected Book Balance */}
+            <div className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors flex-1">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <CalendarCheck className="w-4 h-4" />
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                    Expected Book Balance
+                  </span>
+                  <span className="text-[9px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
+                    Calculated
                   </span>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-8 text-slate-400">
-                <PieChartIcon className="w-10 h-10 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
-                <p className="text-xs font-bold">No Cash Balances Recorded Yet</p>
-                <p className="text-[11px]">Enter your physical cash or e-wallet amounts below to generate the chart.</p>
+              <div className="text-right shrink-0 font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                {formatCurrency(expectedBookBalance)}
               </div>
-            )}
+            </div>
+
+            {/* Item 2: Actual Remaining Cash */}
+            <div className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors flex-1">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                    Actual Remaining Cash
+                  </span>
+                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-bold uppercase shrink-0">
+                    Imputed
+                  </span>
+                </div>
+              </div>
+              <div className="text-right shrink-0 font-bold text-base sm:text-lg text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(actualRemainingCash)}
+              </div>
+            </div>
+
+            {/* Item 3: Settlement Difference */}
+            <div className={`p-3 sm:p-4 flex items-center justify-between gap-3 transition-colors flex-1 ${
+              difference === 0
+                ? 'bg-emerald-50/40 dark:bg-emerald-950/20'
+                : difference > 0
+                ? 'bg-blue-50/40 dark:bg-blue-950/20'
+                : 'bg-rose-50/40 dark:bg-rose-950/20'
+            }`}>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`p-2 rounded-lg shrink-0 ${
+                  difference === 0
+                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
+                    : difference > 0
+                    ? 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                    : 'bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400'
+                }`}>
+                  <Scale className="w-4 h-4" />
+                </div>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                    Settlement Difference
+                  </span>
+                  {difference === 0 ? (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600 text-white font-bold flex items-center gap-1 uppercase shrink-0">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Match
+                    </span>
+                  ) : difference > 0 ? (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold flex items-center gap-1 uppercase shrink-0">
+                      <TrendingUp className="w-2.5 h-2.5" /> Surplus
+                    </span>
+                  ) : (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold flex items-center gap-1 uppercase shrink-0">
+                      <AlertTriangle className="w-2.5 h-2.5" /> Shortage
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className={`text-right shrink-0 font-bold text-base sm:text-lg ${
+                difference === 0
+                  ? 'text-emerald-700 dark:text-emerald-300'
+                  : difference > 0
+                  ? 'text-blue-700 dark:text-blue-300'
+                  : 'text-rose-700 dark:text-rose-300'
+              }`}>
+                {difference > 0 ? `+${formatCurrency(difference)}` : formatCurrency(difference)}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* CARD 2: ACTUAL CASH DISTRIBUTION RATIO (LIST TYPE) */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 shrink-0">
+                <PieChartIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
+                  Actual Cash Distribution Ratio
+                </h3>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Total Actual</span>
+              <span className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(breakdownData.total)}
+              </span>
+            </div>
           </div>
 
-          {/* Breakdown List Cards */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* LIST TYPE CONTAINER FOR CARD 2 */}
+          <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex-1 flex flex-col justify-between">
             {breakdownData.items.map((item) => {
               const IconComp = item.icon;
               return (
-                <div
-                  key={item.name}
-                  className={`p-3.5 rounded-xl border ${item.bgColor} ${item.borderColor} space-y-2 transition-all`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-white/80 dark:bg-slate-900/80 shadow-xs">
-                        <IconComp className={`w-4 h-4 ${item.textColor}`} />
-                      </div>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                        {item.name}
-                      </span>
+                <div key={item.name} className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors flex-1">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`p-2 rounded-lg shrink-0 ${item.bgColor} ${item.textColor}`}>
+                      <IconComp className="w-4 h-4" />
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded font-extrabold ${item.badgeBg}`}>
-                      {item.percentage.toFixed(1)}%
-                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                          {item.name}
+                        </span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${item.badgeBg}`}>
+                          {item.percentage.toFixed(0)}%
+                        </span>
+                      </div>
+                      {/* Progress Bar */}
+                      <div className="w-24 sm:w-36 bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden mt-1.5">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.min(item.percentage, 100)}%`,
+                            backgroundColor: item.color,
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-baseline justify-between">
-                    <span className={`text-base font-black ${item.textColor}`}>
-                      {formatCurrency(item.value)}
-                    </span>
+                  <div className="text-right shrink-0 font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+                    {formatCurrency(item.value)}
                   </div>
-
-                  {/* Progress Bar */}
-                  <div className="w-full bg-slate-200/80 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(item.percentage, 100)}%`,
-                        backgroundColor: item.color,
-                      }}
-                    />
-                  </div>
-
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    {item.subtext}
-                  </p>
                 </div>
               );
             })}
           </div>
         </div>
+
       </div>
 
-      {/* EDITABLE SECTION 1: YEARLY BASELINE & ACCUMULATED LOGS */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
+      {/* CARD 3: EDITABLE BOOK LEDGER INPUTS & BASELINE (LIST TYPE) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-3">
         <div 
           onClick={() => setIsSection1Open(!isSection1Open)}
-          className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 cursor-pointer select-none group"
+          className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 cursor-pointer select-none group"
         >
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
-              <Edit3 className="w-4 h-4 text-indigo-500" />
-              1. Book Ledger Inputs & Baseline ({currentYear})
-            </h3>
-            <span className="text-xs text-slate-400 font-normal hidden sm:inline">(Editable inputs for book calculations)</span>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
+              <Edit3 className="w-5 h-5 text-indigo-500" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center gap-1.5">
+                Book Ledger ({currentYear})
+              </h3>
+            </div>
           </div>
           <button
             type="button"
@@ -622,16 +557,17 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
         </div>
 
         {isSection1Open && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
             
-            {/* Beginning Cash Input */}
-            <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                Beginning Cash ({currentYear})
-              </label>
-              <p className="text-[11px] text-slate-400">Starting cash balance on Jan 1, {currentYear}</p>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-2.5 text-slate-400 font-semibold text-sm">₱</span>
+            {/* 1. Beginning Cash Input Row */}
+            <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors">
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                  Beginning Cash ({currentYear})
+                </label>
+              </div>
+              <div className="relative w-full sm:w-56 shrink-0">
+                <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs sm:text-sm">₱</span>
                 <input
                   type="number"
                   min="0"
@@ -641,37 +577,36 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
                     const val = parseFloat(e.target.value) || 0;
                     handleUpdateField(prev => ({ ...prev, beginningCashThisYear: val }));
                   }}
-                  className="w-full pl-8 pr-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold text-xs sm:text-sm font-sans focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                   placeholder="50000"
                 />
               </div>
             </div>
 
-            {/* Accumulated Sales Input/Auto */}
-            <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Accumulated Sales (Jan - Now)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (cashState.accumulatedSalesOverride !== null) {
-                      handleUpdateField(prev => ({ ...prev, accumulatedSalesOverride: null }));
-                    } else {
-                      handleUpdateField(prev => ({ ...prev, accumulatedSalesOverride: autoAccumulatedSales }));
-                    }
-                  }}
-                  className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
-                >
-                  {cashState.accumulatedSalesOverride !== null ? 'Reset to Auto' : 'Manual Edit'}
-                </button>
+            {/* 2. Accumulated Sales Input/Auto Row */}
+            <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors">
+              <div>
+                <div className="flex items-center gap-2">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                    Accumulated Sales (Jan-Now)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (cashState.accumulatedSalesOverride !== null) {
+                        handleUpdateField(prev => ({ ...prev, accumulatedSalesOverride: null }));
+                      } else {
+                        handleUpdateField(prev => ({ ...prev, accumulatedSalesOverride: autoAccumulatedSales }));
+                      }
+                    }}
+                    className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                  >
+                    {cashState.accumulatedSalesOverride !== null ? 'Reset Auto' : 'Manual Edit'}
+                  </button>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-400">
-                {cashState.accumulatedSalesOverride !== null ? '⚠️ Manual Override Mode' : `Auto-sum of logged sales in ${currentYear}`}
-              </p>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-2.5 text-slate-400 font-semibold text-sm">₱</span>
+              <div className="relative w-full sm:w-56 shrink-0">
+                <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs sm:text-sm">₱</span>
                 <input
                   type="number"
                   min="0"
@@ -681,36 +616,35 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
                     const val = parseFloat(e.target.value) || 0;
                     handleUpdateField(prev => ({ ...prev, accumulatedSalesOverride: val }));
                   }}
-                  className="w-full pl-8 pr-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 font-bold text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm font-sans focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
 
-            {/* Accumulated Expenses Input/Auto */}
-            <div className="space-y-1.5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Accumulated Expenses (Jan - Now)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (cashState.accumulatedExpensesOverride !== null) {
-                      handleUpdateField(prev => ({ ...prev, accumulatedExpensesOverride: null }));
-                    } else {
-                      handleUpdateField(prev => ({ ...prev, accumulatedExpensesOverride: autoAccumulatedExpenses }));
-                    }
-                  }}
-                  className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
-                >
-                  {cashState.accumulatedExpensesOverride !== null ? 'Reset to Auto' : 'Manual Edit'}
-                </button>
+            {/* 3. Accumulated Expenses Input/Auto Row */}
+            <div className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors">
+              <div>
+                <div className="flex items-center gap-2">
+                  <label className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                    Accumulated Expenses (Jan-Now)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (cashState.accumulatedExpensesOverride !== null) {
+                        handleUpdateField(prev => ({ ...prev, accumulatedExpensesOverride: null }));
+                      } else {
+                        handleUpdateField(prev => ({ ...prev, accumulatedExpensesOverride: autoAccumulatedExpenses }));
+                      }
+                    }}
+                    className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                  >
+                    {cashState.accumulatedExpensesOverride !== null ? 'Reset Auto' : 'Manual Edit'}
+                  </button>
+                </div>
               </div>
-              <p className="text-[11px] text-slate-400">
-                {cashState.accumulatedExpensesOverride !== null ? '⚠️ Manual Override Mode' : `Auto-sum of logged expenses in ${currentYear}`}
-              </p>
-              <div className="relative mt-1">
-                <span className="absolute left-3 top-2.5 text-slate-400 font-semibold text-sm">₱</span>
+              <div className="relative w-full sm:w-56 shrink-0">
+                <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs sm:text-sm">₱</span>
                 <input
                   type="number"
                   min="0"
@@ -720,7 +654,7 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
                     const val = parseFloat(e.target.value) || 0;
                     handleUpdateField(prev => ({ ...prev, accumulatedExpensesOverride: val }));
                   }}
-                  className="w-full pl-8 pr-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-rose-600 dark:text-rose-400 font-bold text-sm focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                  className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-rose-600 dark:text-rose-400 font-bold text-xs sm:text-sm font-sans focus:ring-2 focus:ring-rose-500 focus:outline-none"
                 />
               </div>
             </div>
@@ -729,25 +663,24 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
         )}
       </div>
 
-      {/* EDITABLE SECTION 2: E-WALLETS, BANKS & CASH ON HAND BALANCES */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+      {/* CARD 4: EDITABLE MONEY FROM E-WALLETS & BANKS (LIST TYPE) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2.5">
           <div 
             onClick={() => setIsSection2Open(!isSection2Open)}
-            className="flex items-center justify-between sm:justify-start gap-3 cursor-pointer select-none group flex-1"
+            className="flex items-center gap-2.5 cursor-pointer select-none group flex-1 min-w-0"
           >
-            <div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
-                <Wallet className="w-4 h-4 text-emerald-500" />
-                2. Money from E-Wallets & Banks (Imputed Balances)
+            <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 shrink-0">
+              <Wallet className="w-5 h-5 text-emerald-500 shrink-0" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base truncate">
+                Money from E-Wallets & Banks
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Enter your live balances for each wallet or bank account below.
-              </p>
             </div>
             <button
               type="button"
-              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors shrink-0"
             >
               {isSection2Open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
@@ -759,35 +692,35 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
               if (!isSection2Open) setIsSection2Open(true);
               setShowAddCustom(!showAddCustom);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 font-bold text-xs transition-colors self-start sm:self-auto"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900 font-bold text-xs transition-colors shrink-0"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>+ Add Custom Account</span>
+            <span>+ Add Account</span>
           </button>
         </div>
 
         {isSection2Open && (
           <>
-            {/* Add Custom Account Inline Modal/Form */}
+            {/* Add Custom Account Inline Form */}
             {showAddCustom && (
-              <form onSubmit={handleAddCustomAccountSubmit} className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-3">
+              <form onSubmit={handleAddCustomAccountSubmit} className="p-3 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-2 mb-3">
                 <h4 className="text-xs font-bold text-indigo-900 dark:text-indigo-200 uppercase tracking-wider">
-                  Add Additional Bank / Wallet Account
+                  Add Bank / Wallet Account
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Account Name</label>
+                    <label className="block text-[10px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Account Name</label>
                     <input
                       type="text"
                       required
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
                       placeholder="e.g. UnionBank, GrabPay, Tonik"
-                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-medium"
+                      className="w-full px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-sans font-bold"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Current Balance (₱)</label>
+                    <label className="block text-[10px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Current Balance (₱)</label>
                     <input
                       type="number"
                       min="0"
@@ -795,21 +728,21 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
                       value={customAmount}
                       onChange={(e) => setCustomAmount(parseFloat(e.target.value) || '')}
                       placeholder="0.00"
-                      className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-bold"
+                      className="w-full px-2.5 py-1 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-sans font-bold"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 pt-1">
+                <div className="flex justify-end gap-1.5 pt-0.5">
                   <button
                     type="button"
                     onClick={() => setShowAddCustom(false)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
+                    className="px-2.5 py-1 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs hover:bg-indigo-700"
+                    className="px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow-xs hover:bg-indigo-700"
                   >
                     Add Account
                   </button>
@@ -817,93 +750,71 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
               </form>
             )}
 
-            {/* Standard E-Wallets & Banks Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {/* LIST TYPE CONTAINER FOR CARD 4 */}
+            <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
               {accountCards.map(acc => {
                 const currentVal = cashState.balances[acc.key] || 0;
 
                 return (
                   <div
                     key={acc.key}
-                    className={`p-4 rounded-xl border transition-all ${acc.bgClass} flex flex-col justify-between gap-3`}
+                    className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-2 rounded-xl bg-white dark:bg-slate-900 shadow-2xs">
-                          {acc.icon}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-                            {acc.label}
-                          </h4>
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                            {acc.sublabel}
-                          </p>
-                        </div>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-2xs shrink-0">
+                        {acc.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                          {acc.label}
+                        </h4>
                       </div>
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        Balance
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">₱</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="any"
-                          value={currentVal || ''}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value) || 0;
-                            handleBalanceChange(acc.key, val);
-                          }}
-                          className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                          placeholder="0"
-                        />
-                      </div>
+                    <div className="relative w-full sm:w-56 shrink-0">
+                      <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs sm:text-sm">₱</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        value={currentVal || ''}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          handleBalanceChange(acc.key, val);
+                        }}
+                        className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-xs sm:text-sm font-sans text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        placeholder="0.00"
+                      />
                     </div>
                   </div>
                 );
               })}
 
-              {/* Custom Accounts Cards */}
+              {/* Custom Accounts List Rows */}
               {cashState.balances.customAccounts && Object.entries(cashState.balances.customAccounts).map(([name, amt]) => (
                 <div
                   key={name}
-                  className="p-4 rounded-xl border bg-indigo-50/40 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800 flex flex-col justify-between gap-3"
+                  className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-100/50 dark:hover:bg-slate-800/40 transition-colors bg-indigo-50/30 dark:bg-indigo-950/20"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <div className="p-2 rounded-xl bg-white dark:bg-slate-900 shadow-2xs">
-                        <Building2 className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-2xs shrink-0">
+                      <Building2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
                           {name}
                         </h4>
-                        <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                          Custom Bank / Account
-                        </p>
+                        <span className="text-[9px] bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded font-bold uppercase">
+                          Custom
+                        </span>
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCustomAccount(name)}
-                      className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
-                      title="Remove account"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                      Balance
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs">₱</span>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="relative w-full sm:w-56 shrink-0">
+                      <span className="absolute left-3 top-2 text-slate-400 font-bold text-xs sm:text-sm">₱</span>
                       <input
                         type="number"
                         min="0"
@@ -913,20 +824,27 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
                           const val = parseFloat(e.target.value) || 0;
                           handleCustomAccountChange(name, val);
                         }}
-                        className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                        className="w-full pl-7 pr-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 font-bold text-xs sm:text-sm font-sans text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCustomAccount(name)}
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950 rounded-lg transition-colors shrink-0"
+                      title="Remove account"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
-
             </div>
           </>
         )}
       </div>
 
       {/* NOTES & RECONCILIATION AUDIT LOG */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 shadow-xs space-y-2">
         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
           Reconciliation Notes & Remarks
         </label>
@@ -937,11 +855,11 @@ export const CashMonitoringView: React.FC<CashMonitoringViewProps> = ({
             const val = e.target.value;
             handleUpdateField(prev => ({ ...prev, notes: val }));
           }}
-          placeholder="e.g. All GCash cash-in funds transferred to Seabank for interest; physical cash drawer counted by Manager on duty."
-          className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          placeholder=""
+          className="w-full p-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-xs font-sans font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
         />
         {cashState.lastUpdated && (
-          <p className="text-[10px] text-slate-400 text-right">
+          <p className="text-[9px] text-slate-400 text-right font-sans">
             Last saved: {new Date(cashState.lastUpdated).toLocaleString()}
           </p>
         )}

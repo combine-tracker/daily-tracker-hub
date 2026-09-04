@@ -23,9 +23,10 @@ import { loadStoredCreditAccounts, saveStoredCreditAccounts, formatCurrency } fr
 
 interface CreditMonitoringViewProps {
   onShowToast?: (message: string, type?: 'success' | 'error' | 'info') => void;
+  onCreditsChange?: (accounts: CreditAccount[]) => void;
 }
 
-export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onShowToast }) => {
+export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onShowToast, onCreditsChange }) => {
   const [accounts, setAccounts] = useState<CreditAccount[]>(() => loadStoredCreditAccounts());
 
   // Collapsible Section States
@@ -35,7 +36,10 @@ export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onSh
   // Save to localStorage on change
   useEffect(() => {
     saveStoredCreditAccounts(accounts);
-  }, [accounts]);
+    if (onCreditsChange) {
+      onCreditsChange(accounts);
+    }
+  }, [accounts, onCreditsChange]);
 
   // Modal State
   const [editingAccount, setEditingAccount] = useState<CreditAccount | null>(null);
@@ -183,288 +187,262 @@ export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onSh
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header Banner */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl p-3.5 sm:p-5 border border-indigo-200/80 dark:border-indigo-900/40 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-2.5 sm:gap-3">
-          <div className="p-2.5 sm:p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 shrink-0">
-            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
+    <div className="space-y-4 sm:space-y-5">
+      {/* Top Summary Metrics (Retaining + Add Credit Line button) */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
+              Credit Line Overall Summary
+            </h3>
           </div>
-          <div>
-            <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              Credit Line Monitoring
-              <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-semibold">
-                Standalone Tracker
-              </span>
-            </h2>
-            <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Monitor credit limits, current payables, and remaining available balances for Atome, PayMaya, CIMB, GCash & Custom credit facilities. Note: This credit line tab is standalone; any data encoded here will not affect other tabs.
-            </p>
+          <div className="flex items-center gap-2.5 self-end sm:self-auto">
+            <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-extrabold uppercase tracking-wider">
+              {accounts.length} Facilities
+            </span>
+            <button
+              type="button"
+              onClick={handleOpenAdd}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>+ Add Credit Line</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-100 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={handleOpenAdd}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 cursor-pointer"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ Add Credit Line</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Top Summary Cards (2x2 Grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {/* Card 1: Total Credit Limit */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <CreditCard className="w-4 h-4 text-indigo-500" />
+        {/* 4 Summary Items in a horizontal List/Grid Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 bg-slate-50/70 dark:bg-slate-800/50 p-3 sm:p-4 rounded-xl border border-slate-200/80 dark:border-slate-800">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
               Total Credit Limit
             </span>
-            <span className="text-[10px] bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded font-bold">
-              {accounts.length} Accounts
-            </span>
+            <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-white truncate">
+              {formatCurrency(totalCreditLimit)}
+            </div>
           </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 dark:text-white truncate">
-            {formatCurrency(totalCreditLimit)}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Combined maximum credit line granted
-          </p>
-        </div>
 
-        {/* Card 2: Total Payables / Used Credit */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-rose-200 dark:border-rose-900/50 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertCircle className="w-4 h-4 text-rose-500" />
+          <div className="space-y-1 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
               Total Payables (Used)
             </span>
-            <span className="text-[10px] bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-300 px-2 py-0.5 rounded font-bold">
-              Debt Owed
-            </span>
+            <div className="text-base sm:text-lg lg:text-xl font-black text-rose-600 dark:text-rose-400 truncate">
+              {formatCurrency(totalPayables)}
+            </div>
           </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-rose-600 dark:text-rose-400 truncate">
-            {formatCurrency(totalPayables)}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Current outstanding credit balance to pay
-          </p>
-        </div>
 
-        {/* Card 3: Total Available Balance */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              Available Credit Balance
+          <div className="space-y-1 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              Available Credit
             </span>
-            <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-300 px-2 py-0.5 rounded font-bold">
-              Remaining
-            </span>
+            <div className="text-base sm:text-lg lg:text-xl font-black text-emerald-600 dark:text-emerald-400 truncate">
+              {formatCurrency(Math.max(0, totalAvailable))}
+            </div>
           </div>
-          <div className="text-xl sm:text-2xl lg:text-3xl font-black text-emerald-600 dark:text-emerald-400 truncate">
-            {formatCurrency(Math.max(0, totalAvailable))}
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Limit minus payables (Ready to use)
-          </p>
-        </div>
 
-        {/* Card 4: Utilization Rate */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Percent className="w-4 h-4 text-amber-500" />
-              Credit Utilization
+          <div className="space-y-1 border-l border-slate-200 dark:border-slate-700 pl-3">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Percent className="w-3.5 h-3.5 text-amber-500" />
+              Overall Utilization
             </span>
-            <span
-              className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                overallUtilization > 70
-                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                  : overallUtilization > 30
-                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-              }`}
-            >
-              {overallUtilization.toFixed(1)}% Used
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+                {overallUtilization.toFixed(1)}%
+              </span>
+              <span
+                className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${
+                  overallUtilization > 70
+                    ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                    : overallUtilization > 30
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                    : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                }`}
+              >
+                {overallUtilization > 70 ? 'High' : overallUtilization > 30 ? 'Moderate' : 'Low'}
+              </span>
+            </div>
           </div>
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden mt-2">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                overallUtilization > 70 ? 'bg-rose-500' : overallUtilization > 30 ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}
-              style={{ width: `${Math.min(100, overallUtilization)}%` }}
-            />
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            {overallUtilization > 70
-              ? 'High utilization (>70%). Consider settling payments.'
-              : overallUtilization > 30
-              ? 'Moderate utilization (30%-70%).'
-              : 'Healthy utilization (<30%).'}
-          </p>
         </div>
       </div>
 
-      {/* Credit Facilities Grid */}
-      <div className="space-y-4">
-        <button
-          type="button"
+      {/* Credit Line List */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-xs space-y-3">
+        <div 
           onClick={() => setIsOverviewOpen(!isOverviewOpen)}
-          className="w-full flex items-center justify-between bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer text-left"
+          className="flex items-center justify-between cursor-pointer select-none group border-b border-slate-100 dark:border-slate-800 pb-3"
         >
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>Credit Facilities Overview ({accounts.length})</span>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">
+              Credit Line ({accounts.length})
             </h3>
-            <span className="text-xs text-slate-400 hidden sm:inline">
-              — Click edit or adjust payables directly per facility
-            </span>
           </div>
           <div className="flex items-center gap-2 text-slate-500 font-medium text-xs">
-            <span>{isOverviewOpen ? 'Hide' : 'Show'} Overview</span>
+            <span>{isOverviewOpen ? 'Hide' : 'Show'} List</span>
             {isOverviewOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
           </div>
-        </button>
+        </div>
 
         {isOverviewOpen && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {accounts.map((acc) => {
-              const theme = getProviderTheme(acc.category);
-              const available = acc.creditLimit - acc.payableAmount;
-              const utilPct = acc.creditLimit > 0 ? (acc.payableAmount / acc.creditLimit) * 100 : 0;
+          <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-2xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100/80 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th className="px-3.5 py-3">Category</th>
+                    <th className="px-3.5 py-3 text-right">Credit Limit</th>
+                    <th className="px-3.5 py-3 text-right">Current Payable</th>
+                    <th className="px-3.5 py-3 text-right">Available Balance</th>
+                    <th className="px-3.5 py-3 text-center">Utilization</th>
+                    <th className="px-3.5 py-3 text-center">Due Date / Notes</th>
+                    <th className="px-3.5 py-3 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                  {accounts.map((acc) => {
+                    const theme = getProviderTheme(acc.category);
+                    const available = acc.creditLimit - acc.payableAmount;
+                    const utilPct = acc.creditLimit > 0 ? (acc.payableAmount / acc.creditLimit) * 100 : 0;
 
-              return (
-                <div
-                  key={acc.id}
-                  className={`bg-white dark:bg-slate-900 rounded-2xl border ${theme.border} p-4 sm:p-5 shadow-xs space-y-4 relative overflow-hidden transition-all hover:shadow-md`}
-                >
-                  {/* Header Row */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase border ${theme.badge}`}>
-                          {acc.category}
-                        </span>
-                        {acc.dueDate && (
-                          <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
-                            <Calendar className="w-3 h-3 text-indigo-500" />
-                            Due: {acc.dueDate}
-                          </span>
-                        )}
-                      </div>
-                      <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
-                        {acc.name}
-                      </h4>
-                    </div>
-
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(acc)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-all cursor-pointer"
-                        title="Edit facility details"
+                    return (
+                      <tr 
+                        key={acc.id}
+                        className="hover:bg-indigo-50/30 dark:hover:bg-indigo-950/20 transition-colors"
                       >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteAccount(acc.id, acc.name)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-all cursor-pointer"
-                        title="Delete credit line"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
+                        {/* Category */}
+                        <td className="px-3.5 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 shrink-0">
+                              <CreditCard className={`w-3.5 h-3.5 ${theme.text}`} />
+                            </div>
+                            <span className={`px-2.5 py-1 rounded-md text-xs font-black uppercase border ${theme.badge}`}>
+                              {acc.category}
+                            </span>
+                          </div>
+                        </td>
 
-                  {/* Core Metrics Grid */}
-                  <div className="grid grid-cols-3 gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-center">
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Credit Limit</span>
-                      <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate block">
-                        {formatCurrency(acc.creditLimit)}
-                      </span>
-                    </div>
+                        {/* Credit Limit */}
+                        <td className="px-3.5 py-3 text-right font-black text-slate-900 dark:text-white text-xs sm:text-sm">
+                          {formatCurrency(acc.creditLimit)}
+                        </td>
 
-                    <div className="border-x border-slate-200 dark:border-slate-700 px-1">
-                      <span className="text-[10px] font-bold text-rose-500 uppercase tracking-wider block">Payable</span>
-                      <span className="text-xs sm:text-sm font-black text-rose-600 dark:text-rose-400 truncate block">
-                        {formatCurrency(acc.payableAmount)}
-                      </span>
-                    </div>
+                        {/* Current Payable (Inline Editable) */}
+                        <td className="px-3.5 py-3 text-right">
+                          <div className="relative inline-block w-28 sm:w-32">
+                            <span className="absolute left-2.5 top-1.5 text-slate-400 font-bold text-xs">₱</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={acc.payableAmount || ''}
+                              onChange={(e) => handleInlinePayableChange(acc.id, Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="w-full pl-6 pr-2 py-1 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-lg font-black text-rose-600 dark:text-rose-400 text-xs text-right focus:outline-none focus:ring-2 focus:ring-rose-500"
+                              title="Update payable amount directly"
+                            />
+                          </div>
+                        </td>
 
-                    <div>
-                      <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider block">Balance</span>
-                      <span className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 truncate block">
-                        {formatCurrency(Math.max(0, available))}
-                      </span>
-                    </div>
-                  </div>
+                        {/* Available Balance */}
+                        <td className="px-3.5 py-3 text-right font-black text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm">
+                          {formatCurrency(Math.max(0, available))}
+                        </td>
 
-                  {/* Utilization Progress Bar */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] font-semibold">
-                      <span className="text-slate-500 dark:text-slate-400">Credit Limit Utilized</span>
-                      <span className={`font-bold ${utilPct > 80 ? 'text-rose-600' : 'text-slate-700 dark:text-slate-300'}`}>
-                        {utilPct.toFixed(1)}% ({formatCurrency(acc.payableAmount)} / {formatCurrency(acc.creditLimit)})
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-300 ${
-                          utilPct > 80 ? 'bg-rose-500' : utilPct > 40 ? 'bg-amber-500' : 'bg-emerald-500'
-                        }`}
-                        style={{ width: `${Math.min(100, utilPct)}%` }}
-                      />
-                    </div>
-                  </div>
+                        {/* Utilization Bar & Badge */}
+                        <td className="px-3.5 py-3">
+                          <div className="flex flex-col items-center gap-1">
+                            <span
+                              className={`px-2 py-0.2 rounded text-[10px] font-bold ${
+                                utilPct > 80
+                                  ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                  : utilPct > 30
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                              }`}
+                            >
+                              {utilPct.toFixed(1)}%
+                            </span>
+                            <div className="w-16 bg-slate-200 dark:bg-slate-700 h-1 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                  utilPct > 80 ? 'bg-rose-500' : utilPct > 40 ? 'bg-amber-500' : 'bg-emerald-500'
+                                }`}
+                                style={{ width: `${Math.min(100, utilPct)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
 
-                  {/* Notes & Quick Payable Edit */}
-                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs">
-                    <div className="text-slate-500 dark:text-slate-400 truncate max-w-xs italic text-[11px]">
-                      {acc.notes || 'No extra notes specified'}
-                    </div>
+                        {/* Due Date & Notes */}
+                        <td className="px-3.5 py-3 text-center">
+                          <div className="space-y-0.5">
+                            {acc.dueDate ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                                <Calendar className="w-3 h-3 text-indigo-500" />
+                                {acc.dueDate}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 text-[11px]">—</span>
+                            )}
+                            {acc.notes && (
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 italic truncate max-w-[140px] mx-auto">
+                                {acc.notes}
+                              </p>
+                            )}
+                          </div>
+                        </td>
 
-                    <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                      <span className="text-[10px] text-slate-400 font-medium">Update Payable:</span>
-                      <input
-                        type="number"
-                        value={acc.payableAmount}
-                        onChange={(e) => handleInlinePayableChange(acc.id, Number(e.target.value) || 0)}
-                        className="w-24 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-extrabold text-rose-600 dark:text-rose-400 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 text-right"
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                        {/* Actions (Edit and Delete Buttons) */}
+                        <td className="px-3.5 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(acc)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 transition-colors cursor-pointer"
+                              title="Edit facility details (Name, Limit, Notes)"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAccount(acc.id, acc.name)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/60 transition-colors cursor-pointer"
+                              title="Delete credit facility line"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Itemized Comparison Table */}
+      {/* Credit Summary Table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 overflow-hidden">
         <button
           type="button"
           onClick={() => setIsLedgerOpen(!isLedgerOpen)}
           className="w-full flex items-center justify-between p-4 sm:p-5 text-left border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all cursor-pointer"
         >
-          <div className="flex items-center gap-2">
-            <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center gap-2">
-              <span>Credit Facilities Summary Ledger</span>
-            </h3>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              — Atome, PayMaya, CIMB, GCash Breakdown
-            </span>
-          </div>
+          <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center gap-2">
+            <span>Credit Summary</span>
+          </h3>
           <div className="flex items-center gap-2 text-slate-500 font-medium text-xs">
-            <span>{isLedgerOpen ? 'Hide' : 'Show'} Summary Ledger</span>
+            <span>{isLedgerOpen ? 'Hide' : 'Show'}</span>
             {isLedgerOpen ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
           </div>
         </button>
@@ -475,7 +453,6 @@ export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onSh
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-500 font-bold uppercase text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-700">
                   <tr>
-                    <th className="px-3.5 py-2.5">Credit Facility</th>
                     <th className="px-3.5 py-2.5">Category</th>
                     <th className="px-3.5 py-2.5 text-right">Credit Limit</th>
                     <th className="px-3.5 py-2.5 text-right">Current Payable</th>
@@ -490,9 +467,6 @@ export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onSh
                     const util = acc.creditLimit > 0 ? (acc.payableAmount / acc.creditLimit) * 100 : 0;
                     return (
                       <tr key={acc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                        <td className="px-3.5 py-2.5 font-extrabold text-slate-900 dark:text-white">
-                          {acc.name}
-                        </td>
                         <td className="px-3.5 py-2.5">
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                             {acc.category}
@@ -529,7 +503,7 @@ export const CreditMonitoringView: React.FC<CreditMonitoringViewProps> = ({ onSh
                 </tbody>
                 <tfoot className="bg-slate-50 dark:bg-slate-800/60 font-black text-xs border-t border-slate-200 dark:border-slate-700">
                   <tr>
-                    <td className="px-3.5 py-3 text-slate-900 dark:text-white" colSpan={2}>
+                    <td className="px-3.5 py-3 text-slate-900 dark:text-white">
                       TOTAL OVERALL
                     </td>
                     <td className="px-3.5 py-3 text-right text-slate-900 dark:text-white">
